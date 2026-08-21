@@ -1,0 +1,16 @@
+/* Tag Selector */
+h1 {
+    text-align: center;
+    margin-top: 20px;
+    text-shadow: 4px 4px 8px rgba(238, 158, 77, 0.3);
+}
+
+ /* Class selectors */
+.formclass {
+    text-align: center;
+    margin-top: 50px;
+}
+
+.topic {
+    color: crimson;
+}
