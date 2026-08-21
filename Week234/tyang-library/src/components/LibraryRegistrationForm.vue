@@ -54,22 +54,23 @@
                     </div>
                 </form>
 
-                <div class="row mt-5 submissions" v-if="submittedCards.length">
-                    <div class="d-flex flex-wrap justify-content-start card-grid">
-                        <div v-for="(card, index) in submittedCards" :key="index" class="card submission-card">
-                            <div class="card-header">
-                                User Information
-                            </div>
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item">Username: {{ card.username }}</li>
-                                <li class="list-group-item">Password: {{ card.password }}</li>
-                                <li class="list-group-item">Australian Resident: {{ card.isAustralian ? 'Yes' : 'No' }}
-                                </li>
-                                <li class="list-group-item">Gender: {{ card.gender }}</li>
-                                <li class="list-group-item">Reason: {{ card.reason }}</li>
-                            </ul>
-                        </div>
-                    </div>
+                <div v-if="submittedCards.length" class="mt-5 submissions">
+                    <DataTable
+                        :value="submittedCards"
+                        stripedRows
+                        showGridlines
+                        :tableStyle="{ minWidth: '50rem' }"
+                    >
+                        <Column field="username" header="Username" />
+                        <Column field="password" header="Password" />
+                        <Column header="Australian Resident">
+                            <template #body="{ data }">
+                                {{ data.isAustralian ? 'Yes' : 'No' }}
+                            </template>
+                        </Column>
+                        <Column field="gender" header="Gender" />
+                        <Column field="reason" header="Reason" />
+                    </DataTable>
                 </div>
 
             </div>
@@ -79,6 +80,8 @@
 
 <script setup>
 import { ref } from 'vue';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 
 const formData = ref({
     username: '',
@@ -194,34 +197,9 @@ h1 {
     min-height: 44px;
 }
 
-.card-grid {
+.submissions {
     width: 100%;
-    gap: 1rem;
-}
-
-.card {
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.submission-card {
-    flex: 0 1 18rem;
-    width: 18rem;
-    min-width: 0;
-    overflow: hidden;
-}
-
-.card-header {
-    background-color: #275FDA;
-    color: white;
-    padding: 10px;
-    border-radius: 10px 10px 0 0;
-}
-
-.list-group-item {
-    padding: 10px;
-    overflow-wrap: anywhere;
+    overflow-x: auto;
 }
 
 /* Tablet: use the available width while keeping the two-column form. */
@@ -231,14 +209,9 @@ h1 {
         max-width: 100%;
         margin-left: 0;
     }
-
-    .submission-card {
-        flex-basis: calc(50% - 0.5rem);
-        width: calc(50% - 0.5rem);
-    }
 }
 
-/* Mobile: Bootstrap stacks the fields; these rules refine spacing and cards. */
+/* Mobile: Bootstrap stacks the fields; these rules refine spacing and the table. */
 @media (max-width: 767.98px) {
     .registration-page {
         margin-top: 1.5rem !important;
@@ -252,15 +225,6 @@ h1 {
 
     .submissions {
         margin-top: 2rem !important;
-    }
-
-    .card-grid {
-        display: grid !important;
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .submission-card {
-        width: 100%;
     }
 }
 
