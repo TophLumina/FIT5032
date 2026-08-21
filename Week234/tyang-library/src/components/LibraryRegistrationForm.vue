@@ -25,17 +25,21 @@
                         <div class="col-md-6">
                             <div class="form-check">
                                 <input type="checkbox" class="form-check-input" id="isAustralian"
+                                    @blur="() => validateAustralian(true)" @change="() => validateAustralian(false)"
                                     v-model="formData.isAustralian">
                                 <label class="form-check-label" for="isAustralian">Australian Resident?</label>
                             </div>
+                            <div v-if="errors.isAustralian" class="text-danger">{{ errors.isAustralian }}</div>
                         </div>
                         <div class="col-md-6">
                             <label for="gender" class="form-label">Gender</label>
-                            <select class="form-select" id="gender" v-model="formData.gender">
+                            <select class="form-select" id="gender" @blur="() => validateGender(true)"
+                                @change="() => validateGender(false)" v-model="formData.gender">
                                 <option value="male">Male</option>
                                 <option value="female">Female</option>
                                 <option value="other">Other</option>
                             </select>
+                            <div v-if="errors.gender" class="text-danger">{{ errors.gender }}</div>
                         </div>
                     </div>
 
@@ -79,7 +83,7 @@ import { ref } from 'vue';
 const formData = ref({
     username: '',
     password: '',
-    isAustralian: false,
+    isAustralian: null,
     reason: '',
     gender: ''
 });
@@ -87,9 +91,8 @@ const formData = ref({
 const submittedCards = ref([]);
 
 const submitForm = () => {
-    validateName(true);
-    validatePassword(true);
-    if (!errors.value.username && !errors.value.password) {
+    validateForm();
+    if (!errors.value.username && !errors.value.password && !errors.value.gender && !errors.value.isAustralian) {
         submittedCards.value.push({
             ...formData.value
         });
@@ -144,6 +147,29 @@ const validatePassword = (blur) => {
     } else {
         errors.value.password = null;
     }
+}
+
+const validateGender = (blur) => {
+    if (!formData.value.gender) {
+        if (blur) errors.value.gender = 'Please select a gender.';
+    } else {
+        errors.value.gender = null;
+    }
+}
+
+const validateAustralian = (blur) => {
+    if (formData.value.isAustralian === null) {
+        if (blur) errors.value.isAustralian = 'Please indicate if you are an Australian resident.';
+    } else {
+        errors.value.isAustralian = null;
+    }
+}
+
+const validateForm = () => {
+    validateName(true);
+    validatePassword(true);
+    validateGender(true);
+    validateAustralian(true);
 }
 </script>
 
