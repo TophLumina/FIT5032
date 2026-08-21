@@ -7,12 +7,17 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="username" class="form-label">Username</label>
-                            <input type="text" class="form-control" id="username" v-model="formData.username">
+                            <input type="text" class="form-control" id="username" @blur="() => validateName(true)"
+                                @input="() => validateName(false)" v-model="formData.username">
+                            <div v-if="errors.username" class="text-danger">{{ errors.username }}</div>
                         </div>
 
                         <div class="col-md-6">
                             <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" v-model="formData.password">
+                            <input type="password" class="form-control" id="password"
+                                @blur="() => validatePassword(true)" @input="() => validatePassword(false)"
+                                v-model="formData.password">
+                            <div v-if="errors.password" class="text-danger">{{ errors.password }}</div>
                         </div>
                     </div>
 
@@ -82,9 +87,14 @@ const formData = ref({
 const submittedCards = ref([]);
 
 const submitForm = () => {
-    submittedCards.value.push({
-        ...formData.value
-    });
+    validateName(true);
+    validatePassword(true);
+    if (!errors.value.username && !errors.value.password) {
+        submittedCards.value.push({
+            ...formData.value
+        });
+        clearForm();
+    }
 };
 
 const clearForm = () => {
@@ -96,6 +106,45 @@ const clearForm = () => {
         gender: ''
     };
 };
+
+const errors = ref({
+    username: null,
+    password: null,
+    isAustralian: null,
+    reason: null,
+    gender: null,
+});
+
+const validateName = (blur) => {
+    if (formData.value.username.length < 3) {
+        if (blur) errors.value.username = 'Name must be at least 3 characters.';
+    } else {
+        errors.value.username = null;
+    }
+}
+
+const validatePassword = (blur) => {
+    const password = formData.value.password;
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    if (password.length < minLength) {
+        if (blur) errors.value.password = 'Password must be at least 8 characters long.';
+    } else if (!hasUpperCase) {
+        if (blur) errors.value.password = 'Password must contain at least one uppercase letter.';
+    } else if (!hasLowerCase) {
+        if (blur) errors.value.password = 'Password must contain at least one lowercase letter.';
+    } else if (!hasNumber) {
+        if (blur) errors.value.password = 'Password must contain at least one number.';
+    } else if (!hasSpecialChar) {
+        if (blur) errors.value.password = 'Password must contain at least one special character.';
+    } else {
+        errors.value.password = null;
+    }
+}
 </script>
 
 <style scoped>
@@ -171,7 +220,7 @@ h1 {
         padding-left: 1rem;
     }
 
-    .registration-form > .row > .col-md-6 + .col-md-6 {
+    .registration-form>.row>.col-md-6+.col-md-6 {
         margin-top: 1rem;
     }
 
@@ -195,12 +244,12 @@ h1 {
         font-size: 2rem;
     }
 
-    .registration-form > .text-center {
+    .registration-form>.text-center {
         display: grid;
         gap: 0.75rem;
     }
 
-    .registration-form > .text-center .btn {
+    .registration-form>.text-center .btn {
         width: 100%;
         margin: 0 !important;
     }
