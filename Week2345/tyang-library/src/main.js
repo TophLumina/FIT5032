@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import App from './App.vue'
+import router from './router'
 
 // bootstrap css 
 import 'bootstrap/dist/css/bootstrap.min.css'
@@ -14,5 +15,6 @@ app.use(PrimeVue, {
         dark: false
     }
 })
+app.use(router)
 
 app.mount('#app')

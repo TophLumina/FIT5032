@@ -36,8 +36,8 @@
                         <div class="col-md-6 col-sm-6">
                             <label for="confirm-password" class="form-label">Confirm password</label>
                             <input type="password" class="form-control" id="confirm-password"
-                                @blur="() => validateConfirmPassword(true)" @input="() => validateConfirmPassword(false)"
-                                v-model="formData.confirmPassword" />
+                                @blur="() => validateConfirmPassword(true)"
+                                @input="() => validateConfirmPassword(false)" v-model="formData.confirmPassword" />
                             <div v-if="errors.confirmPassword" class="text-danger">{{ errors.confirmPassword }}</div>
                         </div>
                     </div>
@@ -56,6 +56,11 @@
                         <label for="reason" class="form-label">Reason for joining</label>
                         <textarea class="form-control" id="reason" rows="3" v-model="formData.reason"></textarea>
                         <div v-if="analyzeReason()" class="text-success">{{ analyzeReason() }}</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Suburb</label>
+                        <input type="text" class="form-control" id="suburb" v-bind:value="formData.suburb" />
                     </div>
 
                     <div class="text-center">
@@ -94,6 +99,7 @@ const formData = ref({
     confirmPassword: '',
     isAustralian: null,
     reason: '',
+    suburb: 'Clayton',
     gender: ''
 });
 
@@ -186,7 +192,7 @@ const validateAustralian = (blur) => {
 
 const analyzeReason = () => {
     const reason = formData.value.reason.toLowerCase();
-    if (reason.includes('friend')){
+    if (reason.includes('friend')) {
         return "Great to have a friend"
     }
     return null;
