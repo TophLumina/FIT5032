@@ -1,5 +1,6 @@
 <script setup>
 import { RouterLink } from 'vue-router'
+import PhotoCredit from '@/components/PhotoCredit.vue'
 
 defineProps({
   eyebrow: { type: String, required: true },
@@ -9,6 +10,7 @@ defineProps({
   cardDescription: { type: String, required: true },
   target: { type: [String, Object], required: true },
   action: { type: String, required: true },
+  image: { type: Object, required: true },
 })
 </script>
 
@@ -30,7 +32,17 @@ defineProps({
     <section class="card">
       <div class="card-body p-4">
         <div class="row g-4 align-items-center">
-          <div class="col-lg-5"><div class="media-placeholder">Section preview</div></div>
+          <div class="col-lg-5">
+            <div class="ratio ratio-4x3 overflow-hidden rounded">
+              <img
+                :src="image.src"
+                :alt="image.alt"
+                class="h-100 w-100 object-fit-cover"
+                loading="lazy"
+              />
+            </div>
+            <PhotoCredit :credit="image.credit" />
+          </div>
           <div class="col-lg-7">
             <p class="small fw-bold text-success text-uppercase mb-1">Featured pathway</p>
             <h2>{{ cardTitle }}</h2>

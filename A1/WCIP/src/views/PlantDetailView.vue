@@ -1,5 +1,19 @@
 <script setup>
 import { RouterLink } from 'vue-router'
+import CommentSection from '@/components/CommentSection.vue'
+import PhotoCredit from '@/components/PhotoCredit.vue'
+
+const nativeVioletPhoto = {
+  src: '/images/plants/native-violet.jpg',
+  alt: 'A pale native violet flower among green leaves',
+  credit: {
+    author: 'Harry Rose',
+    license: 'CC BY 2.0',
+    licenseUrl: 'https://creativecommons.org/licenses/by/2.0/',
+    sourceUrl:
+      'https://commons.wikimedia.org/wiki/File:Viola_hederacea_flower17_-_Flickr_-_Macleay_Grass_Man.jpg',
+  },
+}
 
 const facts = [
   ['Sunlight', 'Part shade'],
@@ -33,8 +47,14 @@ const steps = [
         <div class="card h-100">
           <div class="card-body p-4">
             <p class="small fw-bold text-success text-uppercase">Plant gallery</p>
-            <div class="media-placeholder media-placeholder-lg">Large plant image placeholder</div>
-            <p class="text-center text-body-secondary mt-3 mb-0" aria-label="Image 1 of 3">● ○ ○</p>
+            <div class="ratio ratio-4x3 overflow-hidden rounded">
+              <img
+                :src="nativeVioletPhoto.src"
+                :alt="nativeVioletPhoto.alt"
+                class="h-100 w-100 object-fit-cover"
+              />
+            </div>
+            <PhotoCredit :credit="nativeVioletPhoto.credit" />
           </div>
         </div>
       </section>
@@ -166,5 +186,7 @@ const steps = [
         </div>
       </div>
     </section>
+
+    <CommentSection content-type="plant" content-slug="native-violet" />
   </div>
 </template>

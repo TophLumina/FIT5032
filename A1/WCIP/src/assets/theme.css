@@ -43,33 +43,6 @@ main {
   background: linear-gradient(135deg, var(--wcip-sage), #fff 68%);
 }
 
-.media-placeholder {
-  display: grid;
-  min-height: 11rem;
-  place-items: center;
-  border: 1px dashed var(--bs-secondary-color);
-  border-radius: var(--bs-border-radius);
-  color: var(--bs-secondary-color);
-  background: var(--bs-tertiary-bg);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-align: center;
-  text-transform: uppercase;
-}
-
-.media-placeholder-sm {
-  min-height: 5rem;
-}
-
-.media-placeholder-lg {
-  min-height: clamp(17rem, 30vw, 30rem);
-}
-
-.media-placeholder-wide {
-  min-height: clamp(17rem, 26vw, 27rem);
-}
-
 .card-hover {
   transition:
     transform 0.15s ease,

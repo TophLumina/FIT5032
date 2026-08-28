@@ -4,6 +4,14 @@
     "slug": "native-violet",
     "commonName": "Native Violet",
     "scientificName": "Viola hederacea",
+    "image": "/images/plants/native-violet.jpg",
+    "imageAlt": "A pale purple Native Violet flower among green leaves",
+    "imageCredit": {
+      "author": "Harry Rose",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Viola_hederacea_flower17_-_Flickr_-_Macleay_Grass_Man.jpg"
+    },
     "status": "native",
     "difficulty": "beginner",
     "spaces": ["balcony", "courtyard", "school"],
@@ -17,6 +25,14 @@
     "slug": "coastal-rosemary",
     "commonName": "Coastal Rosemary",
     "scientificName": "Westringia fruticosa",
+    "image": "/images/plants/coastal-rosemary.jpg",
+    "imageAlt": "A white Coastal Rosemary flower on a leafy shrub",
+    "imageCredit": {
+      "author": "Eug",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Westringia_fruticosa_04.jpg"
+    },
     "status": "native",
     "difficulty": "beginner",
     "spaces": ["balcony", "courtyard", "school"],
@@ -30,6 +46,14 @@
     "slug": "chocolate-lily",
     "commonName": "Chocolate Lily",
     "scientificName": "Arthropodium strictum",
+    "image": "/images/plants/chocolate-lily.jpg",
+    "imageAlt": "Purple Chocolate Lily flowers and buds",
+    "imageCredit": {
+      "author": "DavidFrancis34",
+      "license": "CC BY-SA 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Arthropodium_strictum_(24702775550).jpg"
+    },
     "status": "native",
     "difficulty": "beginner",
     "spaces": ["courtyard", "school"],
@@ -43,6 +67,14 @@
     "slug": "common-everlasting",
     "commonName": "Common Everlasting",
     "scientificName": "Chrysocephalum apiculatum",
+    "image": "/images/plants/common-everlasting.jpg",
+    "imageAlt": "Clusters of yellow Common Everlasting flowers",
+    "imageCredit": {
+      "author": "Melburnian",
+      "license": "CC BY 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.5",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Chrysocephalum_apiculatum.jpg"
+    },
     "status": "native",
     "difficulty": "beginner",
     "spaces": ["balcony", "courtyard", "school"],
@@ -56,6 +88,14 @@
     "slug": "kidney-weed",
     "commonName": "Kidney Weed",
     "scientificName": "Dichondra repens",
+    "image": "/images/plants/kidney-weed.jpg",
+    "imageAlt": "Kidney Weed growing as a dense green groundcover",
+    "imageCredit": {
+      "author": "Peter Woodard",
+      "license": "CC0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dichondra_repens_Eastwood.jpg"
+    },
     "status": "native",
     "difficulty": "beginner",
     "spaces": ["balcony", "courtyard", "school"],
@@ -69,6 +109,14 @@
     "slug": "silver-banksia",
     "commonName": "Silver Banksia",
     "scientificName": "Banksia marginata",
+    "image": "/images/plants/silver-banksia.jpg",
+    "imageAlt": "Immature and mature flower spikes on a Silver Banksia",
+    "imageCredit": {
+      "author": "JJ Harrison",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Banksia_marginata_immature_and_mature.jpg"
+    },
     "status": "native",
     "difficulty": "intermediate",
     "spaces": ["courtyard", "school"],
@@ -82,6 +130,14 @@
     "slug": "kangaroo-paw",
     "commonName": "Kangaroo Paw",
     "scientificName": "Anigozanthos flavidus",
+    "image": "/images/plants/kangaroo-paw.jpg",
+    "imageAlt": "Tall Kangaroo Paw flowers growing outdoors",
+    "imageCredit": {
+      "author": "Forest & Kim Starr",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Starr_980529-4208_Anigozanthos_flavidus.jpg"
+    },
     "status": "native",
     "difficulty": "intermediate",
     "spaces": ["balcony", "courtyard", "school"],
@@ -95,6 +151,14 @@
     "slug": "common-correa",
     "commonName": "Common Correa",
     "scientificName": "Correa reflexa",
+    "image": "/images/plants/common-correa.jpg",
+    "imageAlt": "A tubular red and green Common Correa flower",
+    "imageCredit": {
+      "author": "David Midgley",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Fleur_de_Correa_reflexa.jpg"
+    },
     "status": "native",
     "difficulty": "beginner",
     "spaces": ["balcony", "courtyard", "school"],
@@ -108,6 +172,14 @@
     "slug": "river-mint",
     "commonName": "River Mint",
     "scientificName": "Mentha australis",
+    "image": "/images/plants/river-mint.jpg",
+    "imageAlt": "River Mint leaves and small flowers",
+    "imageCredit": {
+      "author": "Cobi Calyx",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mentha_australis_46762257.jpg"
+    },
     "status": "native",
     "difficulty": "beginner",
     "spaces": ["balcony", "courtyard", "school"],
@@ -121,6 +193,14 @@
     "slug": "blue-flax-lily",
     "commonName": "Blue Flax-lily",
     "scientificName": "Dianella revoluta",
+    "image": "/images/plants/blue-flax-lily.jpg",
+    "imageAlt": "Blue Flax-lily growing near the Great Ocean Road",
+    "imageCredit": {
+      "author": "Sam Genas",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dianella_revoluta.jpg"
+    },
     "status": "native",
     "difficulty": "beginner",
     "spaces": ["courtyard", "school"],
@@ -134,6 +214,14 @@
     "slug": "cut-leaf-daisy",
     "commonName": "Cut-leaf Daisy",
     "scientificName": "Brachyscome multifida",
+    "image": "/images/plants/cut-leaf-daisy.jpg",
+    "imageAlt": "Purple Cut-leaf Daisy flowers",
+    "imageCredit": {
+      "author": "United States Geological Survey",
+      "license": "Public domain",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/Template:PD-USGov-USGS",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Brachyscome_multifida.jpg"
+    },
     "status": "native",
     "difficulty": "beginner",
     "spaces": ["balcony", "courtyard", "school"],
@@ -147,6 +235,14 @@
     "slug": "woolly-grevillea",
     "commonName": "Woolly Grevillea",
     "scientificName": "Grevillea lanigera",
+    "image": "/images/plants/woolly-grevillea.jpg",
+    "imageAlt": "Woolly Grevillea flowering in Namadgi National Park",
+    "imageCredit": {
+      "author": "Donald Hobern",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Grevillea_lanigera_(37578818970).jpg"
+    },
     "status": "native",
     "difficulty": "intermediate",
     "spaces": ["balcony", "courtyard"],

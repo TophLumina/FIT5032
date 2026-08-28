@@ -1,5 +1,18 @@
 <script setup>
 import { RouterLink } from 'vue-router'
+import CommentSection from '@/components/CommentSection.vue'
+import PhotoCredit from '@/components/PhotoCredit.vue'
+
+const guidePhoto = {
+  src: '/images/pages/pollinator-pot.jpg',
+  alt: 'A container garden of flowers in large planters',
+  credit: {
+    author: 'Share Bear',
+    license: 'Public domain',
+    licenseUrl: 'https://commons.wikimedia.org/wiki/Template:PD-self',
+    sourceUrl: 'https://commons.wikimedia.org/wiki/File:495_-_Bathrust_NB.JPG',
+  },
+}
 
 const materials = [
   '30–40 cm pot with drainage',
@@ -55,9 +68,14 @@ function printPage() {
         <div class="card h-100">
           <div class="card-body p-4">
             <p class="small fw-bold text-success text-uppercase">Guide hero</p>
-            <div class="media-placeholder media-placeholder-lg">
-              Large project image placeholder
+            <div class="ratio ratio-4x3 overflow-hidden rounded">
+              <img
+                :src="guidePhoto.src"
+                :alt="guidePhoto.alt"
+                class="h-100 w-100 object-fit-cover"
+              />
             </div>
+            <PhotoCredit :credit="guidePhoto.credit" />
           </div>
         </div>
       </section>
@@ -170,5 +188,7 @@ function printPage() {
         </div>
       </div>
     </section>
+
+    <CommentSection content-type="guide" content-slug="build-a-pollinator-pot" />
   </div>
 </template>

@@ -32,6 +32,16 @@ const routes = [
       cardDescription: 'A 25-minute beginner project for a balcony, courtyard or classroom.',
       target: { name: 'guide-detail' },
       action: 'Open guide',
+      image: {
+        src: '/images/pages/pollinator-pot.jpg',
+        alt: 'A container garden of flowers in large planters',
+        credit: {
+          author: 'Share Bear',
+          license: 'Public domain',
+          licenseUrl: 'https://commons.wikimedia.org/wiki/Template:PD-self',
+          sourceUrl: 'https://commons.wikimedia.org/wiki/File:495_-_Bathrust_NB.JPG',
+        },
+      },
     },
     meta: { title: 'Gardening Guides' },
   },
@@ -54,6 +64,17 @@ const routes = [
       cardDescription: 'Help more people make responsible, locally relevant planting choices.',
       target: { name: 'home' },
       action: 'Return home',
+      image: {
+        src: '/images/pages/melbourne-community-garden.jpg',
+        alt: 'People gardening together in a Melbourne community garden',
+        credit: {
+          author: 'HelloMojo',
+          license: 'Public domain',
+          licenseUrl: 'https://commons.wikimedia.org/wiki/Template:PD-self',
+          sourceUrl:
+            'https://commons.wikimedia.org/wiki/File:Community_Garden,_Melbourne,_Australia.jpg',
+        },
+      },
     },
     meta: { title: 'About' },
   },

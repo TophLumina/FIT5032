@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import PhotoCredit from '@/components/PhotoCredit.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -294,17 +295,30 @@ function formatLabel(value) {
 
         <div v-else class="row g-3">
           <div v-for="plant in sortedPlants" :key="plant.id" class="col-md-6 col-xl-4">
-            <component
-              :is="plant.slug === 'native-violet' ? RouterLink : 'article'"
-              class="card card-hover h-100 text-decoration-none"
-              :to="plant.slug === 'native-violet' ? { name: 'plant-detail' } : undefined"
-            >
+            <article class="card card-hover h-100">
               <div class="card-body">
-                <div class="media-placeholder mb-3">Plant image</div>
+                <div class="ratio ratio-4x3 overflow-hidden rounded">
+                  <img
+                    :src="plant.image"
+                    :alt="plant.imageAlt"
+                    class="h-100 w-100 object-fit-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <PhotoCredit :credit="plant.imageCredit" />
                 <span class="badge text-bg-success mb-2">
                   {{ formatLabel(plant.status) }} · {{ formatLabel(plant.difficulty) }}
                 </span>
-                <h3 class="h5">{{ plant.commonName }}</h3>
+                <h3 class="h5">
+                  <RouterLink
+                    v-if="plant.slug === 'native-violet'"
+                    class="stretched-link text-decoration-none"
+                    :to="{ name: 'plant-detail' }"
+                  >
+                    {{ plant.commonName }}
+                  </RouterLink>
+                  <template v-else>{{ plant.commonName }}</template>
+                </h3>
                 <em class="small text-body-secondary">{{ plant.scientificName }}</em>
                 <p class="small border-top pt-3 mt-3 mb-2">
                   {{ plant.sunlight.map(formatLabel).join(' / ') }} ·
@@ -315,7 +329,7 @@ function formatLabel(value) {
                 </p>
                 <span v-if="plant.slug === 'native-violet'">View plant →</span>
               </div>
-            </component>
+            </article>
           </div>
         </div>
       </section>

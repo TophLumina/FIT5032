@@ -1,6 +1,7 @@
 <script setup>
 import { reactive } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
+import PhotoCredit from '@/components/PhotoCredit.vue'
 
 const router = useRouter()
 const choices = reactive({ space: '', sunlight: '', experience: 'beginner' })
@@ -12,9 +13,48 @@ const spaces = [
 ]
 
 const seasonalPlants = [
-  { name: 'Native Violet', detail: 'Part shade · Easy', tag: 'Pollinators', route: 'plant-detail' },
-  { name: 'Coastal Rosemary', detail: 'Full sun · Easy', tag: 'Balcony' },
-  { name: 'Silver Banksia', detail: 'Full sun · Medium', tag: 'Native' },
+  {
+    name: 'Native Violet',
+    detail: 'Part shade · Easy',
+    tag: 'Pollinators',
+    route: 'plant-detail',
+    image: '/images/plants/native-violet.jpg',
+    alt: 'A pale native violet flower among green leaves',
+    credit: {
+      author: 'Harry Rose',
+      license: 'CC BY 2.0',
+      licenseUrl: 'https://creativecommons.org/licenses/by/2.0/',
+      sourceUrl:
+        'https://commons.wikimedia.org/wiki/File:Viola_hederacea_flower17_-_Flickr_-_Macleay_Grass_Man.jpg',
+    },
+  },
+  {
+    name: 'Coastal Rosemary',
+    detail: 'Full sun · Easy',
+    tag: 'Balcony',
+    image: '/images/plants/coastal-rosemary.jpg',
+    alt: 'White flowers and grey-green leaves of coastal rosemary',
+    credit: {
+      author: 'Eug',
+      license: 'CC BY-SA 3.0',
+      licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0/',
+      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Westringia_fruticosa_04.jpg',
+    },
+  },
+  {
+    name: 'Silver Banksia',
+    detail: 'Full sun · Medium',
+    tag: 'Native',
+    image: '/images/plants/silver-banksia.jpg',
+    alt: 'Immature and mature flower spikes of silver banksia',
+    credit: {
+      author: 'JJ Harrison',
+      license: 'CC BY-SA 3.0',
+      licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0/',
+      sourceUrl:
+        'https://commons.wikimedia.org/wiki/File:Banksia_marginata_immature_and_mature.jpg',
+    },
+  },
 ]
 
 function findPlants() {
@@ -107,18 +147,31 @@ function findPlants() {
             </div>
             <div class="row g-3">
               <div v-for="plant in seasonalPlants" :key="plant.name" class="col-md-4">
-                <component
-                  :is="plant.route ? RouterLink : 'article'"
-                  class="card card-hover h-100 text-decoration-none"
-                  :to="plant.route ? { name: plant.route } : undefined"
-                >
+                <article class="card card-hover h-100">
                   <div class="card-body">
-                    <div class="media-placeholder media-placeholder-sm mb-3">Plant</div>
-                    <strong>{{ plant.name }}</strong
-                    ><small class="d-block text-body-secondary mb-2">{{ plant.detail }}</small>
+                    <div class="ratio ratio-4x3 overflow-hidden rounded">
+                      <img
+                        :src="plant.image"
+                        :alt="plant.alt"
+                        class="h-100 w-100 object-fit-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    <PhotoCredit :credit="plant.credit" />
+                    <strong class="d-block mt-2">
+                      <RouterLink
+                        v-if="plant.route"
+                        class="stretched-link text-decoration-none"
+                        :to="{ name: plant.route }"
+                      >
+                        {{ plant.name }}
+                      </RouterLink>
+                      <template v-else>{{ plant.name }}</template>
+                    </strong>
+                    <small class="d-block text-body-secondary mb-2">{{ plant.detail }}</small>
                     <span class="badge text-bg-light border">{{ plant.tag }}</span>
                   </div>
-                </component>
+                </article>
               </div>
             </div>
           </div>
