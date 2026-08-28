@@ -1,11 +1,14 @@
-<script setup></script>
+<script setup>
+import { RouterView } from 'vue-router'
+import AppFooter from '@/components/AppFooter.vue'
+import AppNavbar from '@/components/AppNavbar.vue'
+</script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <a class="skip-link btn btn-dark" href="#main-content">Skip to main content</a>
+  <AppNavbar />
+  <main id="main-content">
+    <RouterView />
+  </main>
+  <AppFooter />
 </template>
-
-<style scoped></style>
