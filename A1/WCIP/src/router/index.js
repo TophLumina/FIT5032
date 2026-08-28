@@ -14,10 +14,10 @@ const routes = [
     meta: { title: 'Plant Finder' },
   },
   {
-    path: '/plants/native-violet',
+    path: '/plants/:slug',
     name: 'plant-detail',
     component: () => import('@/views/PlantDetailView.vue'),
-    meta: { title: 'Native Violet' },
+    meta: { title: 'Plant details' },
   },
   {
     path: '/guides',

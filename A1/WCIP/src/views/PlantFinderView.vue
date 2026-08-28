@@ -311,13 +311,11 @@ function formatLabel(value) {
                 </span>
                 <h3 class="h5">
                   <RouterLink
-                    v-if="plant.slug === 'native-violet'"
                     class="stretched-link text-decoration-none"
-                    :to="{ name: 'plant-detail' }"
+                    :to="{ name: 'plant-detail', params: { slug: plant.slug } }"
                   >
                     {{ plant.commonName }}
                   </RouterLink>
-                  <template v-else>{{ plant.commonName }}</template>
                 </h3>
                 <em class="small text-body-secondary">{{ plant.scientificName }}</em>
                 <p class="small border-top pt-3 mt-3 mb-2">
@@ -327,7 +325,6 @@ function formatLabel(value) {
                 <p class="small text-body-secondary mb-2">
                   {{ plant.spaces.map(formatLabel).join(' / ') }}
                 </p>
-                <span v-if="plant.slug === 'native-violet'">View plant →</span>
               </div>
             </article>
           </div>

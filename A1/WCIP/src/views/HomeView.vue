@@ -1,5 +1,5 @@
 <script setup>
-import { reactive } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import PhotoCredit from '@/components/PhotoCredit.vue'
 
@@ -12,54 +12,40 @@ const spaces = [
   { title: 'School Garden', detail: 'Durable · learning focused', query: 'school' },
 ]
 
-const seasonalPlants = [
-  {
-    name: 'Native Violet',
-    detail: 'Part shade · Easy',
-    tag: 'Pollinators',
-    route: 'plant-detail',
-    image: '/images/plants/native-violet.jpg',
-    alt: 'A pale native violet flower among green leaves',
-    credit: {
-      author: 'Harry Rose',
-      license: 'CC BY 2.0',
-      licenseUrl: 'https://creativecommons.org/licenses/by/2.0/',
-      sourceUrl:
-        'https://commons.wikimedia.org/wiki/File:Viola_hederacea_flower17_-_Flickr_-_Macleay_Grass_Man.jpg',
-    },
-  },
-  {
-    name: 'Coastal Rosemary',
-    detail: 'Full sun · Easy',
-    tag: 'Balcony',
-    image: '/images/plants/coastal-rosemary.jpg',
-    alt: 'White flowers and grey-green leaves of coastal rosemary',
-    credit: {
-      author: 'Eug',
-      license: 'CC BY-SA 3.0',
-      licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0/',
-      sourceUrl: 'https://commons.wikimedia.org/wiki/File:Westringia_fruticosa_04.jpg',
-    },
-  },
-  {
-    name: 'Silver Banksia',
-    detail: 'Full sun · Medium',
-    tag: 'Native',
-    image: '/images/plants/silver-banksia.jpg',
-    alt: 'Immature and mature flower spikes of silver banksia',
-    credit: {
-      author: 'JJ Harrison',
-      license: 'CC BY-SA 3.0',
-      licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0/',
-      sourceUrl:
-        'https://commons.wikimedia.org/wiki/File:Banksia_marginata_immature_and_mature.jpg',
-    },
-  },
-]
+const seasonalPlants = ref([])
+const seasonalLoadError = ref('')
+const seasonalSlugs = ['native-violet', 'coastal-rosemary', 'silver-banksia']
+
+onMounted(loadSeasonalPlants)
+
+async function loadSeasonalPlants() {
+  seasonalLoadError.value = ''
+
+  try {
+    const response = await fetch(`${import.meta.env.BASE_URL}data/plants.json`)
+    if (!response.ok) throw new Error(`Plant data request failed with status ${response.status}.`)
+
+    const data = await response.json()
+    if (!Array.isArray(data)) throw new TypeError('Plant data must be an array.')
+
+    seasonalPlants.value = seasonalSlugs
+      .map((slug) => data.find((plant) => plant.slug === slug))
+      .filter(Boolean)
+  } catch {
+    seasonalLoadError.value = 'Seasonal plant data could not be loaded.'
+  }
+}
 
 function findPlants() {
   const query = Object.fromEntries(Object.entries(choices).filter(([, value]) => value))
   router.push({ name: 'plants', query })
+}
+
+function formatLabel(value) {
+  return String(value)
+    .split('-')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
 }
 </script>
 
@@ -145,31 +131,37 @@ function findPlants() {
               </div>
               <small>Late winter / early spring picks</small>
             </div>
+            <div v-if="seasonalLoadError" class="alert alert-warning" role="alert">
+              {{ seasonalLoadError }}
+            </div>
             <div class="row g-3">
-              <div v-for="plant in seasonalPlants" :key="plant.name" class="col-md-4">
+              <div v-for="plant in seasonalPlants" :key="plant.id" class="col-md-4">
                 <article class="card card-hover h-100">
                   <div class="card-body">
                     <div class="ratio ratio-4x3 overflow-hidden rounded">
                       <img
                         :src="plant.image"
-                        :alt="plant.alt"
+                        :alt="plant.imageAlt"
                         class="h-100 w-100 object-fit-cover"
                         loading="lazy"
                       />
                     </div>
-                    <PhotoCredit :credit="plant.credit" />
+                    <PhotoCredit :credit="plant.imageCredit" />
                     <strong class="d-block mt-2">
                       <RouterLink
-                        v-if="plant.route"
                         class="stretched-link text-decoration-none"
-                        :to="{ name: plant.route }"
+                        :to="{ name: 'plant-detail', params: { slug: plant.slug } }"
                       >
-                        {{ plant.name }}
+                        {{ plant.commonName }}
                       </RouterLink>
-                      <template v-else>{{ plant.name }}</template>
                     </strong>
-                    <small class="d-block text-body-secondary mb-2">{{ plant.detail }}</small>
-                    <span class="badge text-bg-light border">{{ plant.tag }}</span>
+                    <small class="d-block text-body-secondary mb-2">
+                      {{ plant.sunlight.map(formatLabel).join(' / ') }} ·
+                      {{ formatLabel(plant.difficulty) }}
+                    </small>
+                    <span class="badge text-bg-light border">
+                      {{ plant.biodiversity.map(formatLabel).join(' / ') }}
+                    </span>
                   </div>
                 </article>
               </div>
