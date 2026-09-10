@@ -14,6 +14,9 @@ import router from '@/router';
           <router-link to="/FireLogin" class="nav-link" active-class="active">FireBase Login</router-link>
         </li>
 
+        <li>
+          <router-link to="/FireSignin" class="nav-lin" active-class="active">Firebase Signin</router-link>
+        </li>
       </ul>
     </header>
   </div>

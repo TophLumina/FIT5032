@@ -1,16 +1,23 @@
-import FirebaseSigninView from '@/view/FirebaseSigninView.vue'
 import { createRouter, createWebHistory } from 'vue-router'
-
-const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [],
-})
+import FirebaseRegisterView from '@/views/FireBaseRegisterView.vue'
+import FirebaseSigninView from '@/views/FireBaseSigninView.vue'
 
 const routes = [
   {
     path: "/FireLogin",
     name: "/FireLogin",
+    component: FirebaseRegisterView
+  },
+  {
+    path: "/FireSignin",
+    name: "/FireSignin",
     component: FirebaseSigninView
   }
 ]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes
+})
+
 export default router

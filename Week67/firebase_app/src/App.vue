@@ -1,11 +1,18 @@
-<script setup></script>
+<script setup>
+import BHeader from './components/BHeader.vue';
+import router from './router/index.js';
+</script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
-</template>
+   <div class="main-container">
+      <div class="header-container">
+         <header>
+            <BHeader />
+         </header>
 
-<style scoped></style>
+         <main class="main-content">
+            <router-view />
+         </main>
+      </div>
+   </div>
+</template>
