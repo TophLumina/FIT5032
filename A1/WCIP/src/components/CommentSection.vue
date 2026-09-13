@@ -1,5 +1,8 @@
 <script setup>
-import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
+import { authReady, isAdmin, user } from '@/services/auth'
+import { addComment, editComment, removeComment, subscribeToComments } from '@/services/comments'
 
 const props = defineProps({
   contentType: {
@@ -7,154 +10,188 @@ const props = defineProps({
     required: true,
     validator: (value) => ['plant', 'guide'].includes(value),
   },
-  contentSlug: {
-    type: String,
-    required: true,
-  },
+  contentSlug: { type: String, required: true },
 })
-
-const formElement = ref(null)
-const comments = ref([])
-const userComments = ref([])
-const loading = ref(true)
-const loadWarning = ref('')
-const successMessage = ref('')
-
-const form = reactive({
-  name: '',
-  email: '',
-  message: '',
-})
-
-const errors = reactive({
-  name: '',
-  email: '',
-  message: '',
-})
-
+const route = useRoute()
 const contentKey = computed(() => `${props.contentType}:${props.contentSlug}`)
-const storageKey = 'wcip:comments'
-const legacyStorageKey = computed(() => `wcip:comments:${contentKey.value}`)
+const comments = ref([])
+const loading = ref(true)
+const fromCache = ref(true)
+const pending = ref(false)
+const loadError = ref('')
+const actionError = ref('')
+const successMessage = ref('')
+const busy = ref(false)
+const message = ref('')
+const rating = ref(null)
+const editingId = ref(null)
+const editForm = reactive({ message: '', rating: null })
 
-onMounted(loadComments)
-
-async function loadComments() {
-  loading.value = true
-  loadWarning.value = ''
-
-  try {
-    const response = await fetch(`${import.meta.env.BASE_URL}data/comments.json`)
-    if (!response.ok) throw new Error(`Comment data request failed with status ${response.status}.`)
-    const data = await response.json()
-    comments.value = Array.isArray(data[contentKey.value]) ? data[contentKey.value] : []
-  } catch {
-    loadWarning.value =
-      'Published comments could not be loaded, but you can still add a local comment.'
-  }
-
-  try {
-    const storedDocument = parseStoredDocument()
-    const currentComments = storedDocument[contentKey.value]
-
-    if (Array.isArray(currentComments)) {
-      userComments.value = currentComments
-    } else {
-      const legacyComments = JSON.parse(localStorage.getItem(legacyStorageKey.value) ?? '[]')
-      userComments.value = Array.isArray(legacyComments) ? legacyComments : []
-
-      if (userComments.value.length) {
-        saveUserComments()
-        localStorage.removeItem(legacyStorageKey.value)
-      }
+// A new rated comment replaces this account's contribution to the plant average.
+const ratedComments = computed(() => {
+  const latestByAuthor = new Map()
+  for (const comment of comments.value) {
+    if (
+      !comment.pending &&
+      Number.isInteger(comment.rating) &&
+      !latestByAuthor.has(comment.authorUid)
+    ) {
+      latestByAuthor.set(comment.authorUid, comment)
     }
+  }
+  return [...latestByAuthor.values()]
+})
+const average = computed(() =>
+  ratedComments.value.length
+    ? (
+        ratedComments.value.reduce((sum, comment) => sum + comment.rating, 0) /
+        ratedComments.value.length
+      ).toFixed(1)
+    : null,
+)
 
-    comments.value = [...userComments.value, ...comments.value]
+watch(
+  contentKey,
+  (key, _previous, onCleanup) => {
+    let active = true
+    comments.value = []
+    loading.value = true
+    fromCache.value = true
+    loadError.value = ''
+    actionError.value = ''
+    successMessage.value = ''
+    message.value = ''
+    rating.value = null
+    editingId.value = null
+    const unsubscribe = subscribeToComments(
+      key,
+      (snapshot) => {
+        if (!active) return
+        comments.value = snapshot.comments
+        fromCache.value = snapshot.fromCache
+        pending.value = snapshot.pending
+        loading.value = false
+        if (
+          editingId.value &&
+          !snapshot.comments.some((comment) => comment.id === editingId.value)
+        ) {
+          editingId.value = null
+        }
+      },
+      () => {
+        if (!active) return
+        comments.value = []
+        loadError.value = 'Comments could not be loaded. Please refresh to try again.'
+        loading.value = false
+      },
+    )
+    onCleanup(() => {
+      active = false
+      unsubscribe()
+    })
+  },
+  { immediate: true },
+)
+
+watch(
+  () => user.value?.uid,
+  () => {
+    message.value = ''
+    rating.value = null
+    editingId.value = null
+    actionError.value = ''
+    successMessage.value = ''
+  },
+)
+watch(isAdmin, (value) => {
+  if (!value) editingId.value = null
+})
+
+function validMessage(value) {
+  return value.trim().length >= 10 && value.trim().length <= 300
+}
+
+async function runAction(action, success, failure, onSuccess) {
+  const key = contentKey.value
+  const uid = user.value?.uid
+  const sameContext = () => key === contentKey.value && uid === user.value?.uid
+  busy.value = true
+  actionError.value = ''
+  successMessage.value = ''
+  try {
+    await action(key)
+    if (sameContext()) {
+      onSuccess?.()
+      successMessage.value = success
+    }
   } catch {
-    loadWarning.value = 'Saved comments could not be restored from this browser.'
+    if (sameContext()) actionError.value = failure
   } finally {
-    loading.value = false
+    busy.value = false
   }
 }
 
-function validateForm() {
-  const name = form.name.trim()
-  const email = form.email.trim()
-  const message = form.message.trim()
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-  errors.name = !name
-    ? 'Display name is required.'
-    : name.length < 2 || name.length > 30
-      ? 'Display name must contain 2–30 characters.'
-      : ''
-  errors.email = !email
-    ? 'Email address is required.'
-    : !emailPattern.test(email)
-      ? 'Enter a valid email address.'
-      : ''
-  errors.message = !message
-    ? 'Comment is required.'
-    : message.length < 10 || message.length > 300
-      ? 'Comment must contain 10–300 characters.'
-      : ''
-
-  return !Object.values(errors).some(Boolean)
-}
-
-async function submitComment() {
+function submitComment() {
+  if (busy.value || !user.value || fromCache.value || loadError.value) return
+  actionError.value = ''
   successMessage.value = ''
-
-  if (!validateForm()) {
-    await nextTick()
-    formElement.value?.querySelector('.is-invalid')?.focus()
+  if (!validMessage(message.value)) {
+    actionError.value = 'Comment must contain 10–300 characters.'
     return
   }
-
-  const comment = {
-    id: `local-${Date.now()}`,
-    author: form.name.trim(),
-    message: form.message.trim(),
-    createdAt: new Date().toISOString(),
-    status: 'pending',
-  }
-
-  userComments.value.unshift(comment)
-  comments.value.unshift(comment)
-
-  try {
-    saveUserComments()
-    successMessage.value =
-      'Thanks — your comment is pending review and saved as JSON in this browser.'
-  } catch {
-    successMessage.value =
-      'Your comment was added for this session, but could not be saved locally.'
-  }
-
-  form.name = ''
-  form.email = ''
-  form.message = ''
-  Object.keys(errors).forEach((key) => {
-    errors[key] = ''
-  })
+  return runAction(
+    (key) => addComment(key, message.value, props.contentType === 'plant' ? rating.value : null),
+    'Your comment has been posted.',
+    'Your comment could not be posted. Please try again.',
+    () => {
+      message.value = ''
+      rating.value = null
+    },
+  )
 }
 
-function parseStoredDocument() {
-  const value = JSON.parse(localStorage.getItem(storageKey) ?? '{}')
-  return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+function startEditing(comment) {
+  if (!isAdmin.value || busy.value) return
+  editingId.value = comment.id
+  editForm.message = comment.message
+  editForm.rating = comment.rating
+  actionError.value = ''
+  successMessage.value = ''
 }
 
-function saveUserComments() {
-  const storedDocument = parseStoredDocument()
-  storedDocument[contentKey.value] = userComments.value
-  localStorage.setItem(storageKey, JSON.stringify(storedDocument))
+function saveEdit() {
+  if (!isAdmin.value || busy.value || !editingId.value) return
+  actionError.value = ''
+  if (!validMessage(editForm.message)) {
+    actionError.value = 'Comment must contain 10–300 characters.'
+    return
+  }
+  return runAction(
+    (key) => editComment(key, editingId.value, editForm.message, editForm.rating),
+    'Comment updated.',
+    'The comment could not be updated. Check your permissions and try again.',
+    () => {
+      editingId.value = null
+    },
+  )
+}
+
+function deleteComment(comment) {
+  if (!isAdmin.value || busy.value || !window.confirm('Delete this comment?')) return
+  return runAction(
+    (key) => removeComment(key, comment.id),
+    'Comment deleted.',
+    'The comment could not be deleted. Check your permissions and try again.',
+  )
 }
 
 function formatDate(value) {
+  if (!value?.toDate) return 'Saving…'
   return new Intl.DateTimeFormat('en-AU', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
-  }).format(new Date(value))
+  }).format(value.toDate())
 }
 </script>
 
@@ -166,16 +203,25 @@ function formatDate(value) {
           <div class="card-body p-4">
             <p class="small fw-bold text-success text-uppercase mb-1">Community feedback</p>
             <h2 id="comments-title" class="h3">Comments ({{ comments.length }})</h2>
-
-            <div v-if="loading" class="d-flex align-items-center gap-3 py-4" role="status">
-              <span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span>
-              <span>Loading comments…</span>
-            </div>
-            <div v-else>
-              <div v-if="loadWarning" class="alert alert-warning" role="alert">
-                {{ loadWarning }}
-              </div>
-              <p v-if="comments.length === 0" class="text-body-secondary">
+            <p
+              v-if="contentType === 'plant' && average && !fromCache && !pending && !loadError"
+              class="text-body-secondary"
+            >
+              <strong class="text-primary">{{ average }} / 5 ★</strong>
+              · {{ ratedComments.length }}
+              {{ ratedComments.length === 1 ? 'gardener' : 'gardeners' }}
+            </p>
+            <p v-if="loading" role="status">Loading comments…</p>
+            <p v-else-if="loadError" class="alert alert-warning" role="alert">{{ loadError }}</p>
+            <template v-else>
+              <p v-if="fromCache || pending" class="small text-body-secondary" role="status">
+                {{
+                  pending
+                    ? 'Waiting for changes to be saved…'
+                    : 'Connecting to get the latest comments…'
+                }}
+              </p>
+              <p v-if="!comments.length && !fromCache" class="text-body-secondary">
                 No comments yet. Start the discussion.
               </p>
               <article v-for="comment in comments" :key="comment.id" class="border-top py-3">
@@ -183,86 +229,158 @@ function formatDate(value) {
                   <strong>{{ comment.author }}</strong>
                   <span class="small text-body-secondary">{{ formatDate(comment.createdAt) }}</span>
                 </div>
-                <p class="mb-2 mt-2">{{ comment.message }}</p>
-                <span v-if="comment.status === 'pending'" class="badge text-bg-warning"
-                  >Pending review</span
+                <form
+                  v-if="isAdmin && editingId === comment.id"
+                  class="mt-3"
+                  @submit.prevent="saveEdit"
                 >
+                  <fieldset :disabled="busy || fromCache">
+                    <legend class="visually-hidden">Edit comment</legend>
+                    <label :for="`edit-message-${comment.id}`" class="form-label">Comment</label>
+                    <textarea
+                      :id="`edit-message-${comment.id}`"
+                      v-model="editForm.message"
+                      class="form-control mb-3"
+                      required
+                      minlength="10"
+                      maxlength="300"
+                      rows="4"
+                    ></textarea>
+                    <div v-if="contentType === 'plant'" class="mb-3">
+                      <label :for="`edit-rating-${comment.id}`" class="form-label"
+                        >Plant rating (optional)</label
+                      >
+                      <select
+                        :id="`edit-rating-${comment.id}`"
+                        v-model="editForm.rating"
+                        class="form-select"
+                      >
+                        <option :value="null">No rating</option>
+                        <option v-for="score in 5" :key="score" :value="score">
+                          {{ score }} / 5 ★
+                        </option>
+                      </select>
+                    </div>
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-primary btn-sm" type="submit">
+                        {{ busy ? 'Saving…' : 'Save changes' }}
+                      </button>
+                      <button
+                        class="btn btn-outline-secondary btn-sm"
+                        type="button"
+                        @click="editingId = null"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </fieldset>
+                </form>
+                <template v-else>
+                  <p
+                    v-if="comment.rating !== null && contentType === 'plant'"
+                    class="text-primary small mt-2 mb-1"
+                  >
+                    <span :aria-label="`${comment.rating} out of 5 stars`"
+                      >{{ '★'.repeat(comment.rating) }}{{ '☆'.repeat(5 - comment.rating) }}</span
+                    >
+                  </p>
+                  <p class="mb-2 mt-2 text-break comment-message">{{ comment.message }}</p>
+                  <span v-if="comment.pending" class="small text-body-secondary">Saving…</span>
+                  <div v-if="isAdmin" class="d-flex gap-2 mt-2">
+                    <button
+                      class="btn btn-outline-primary btn-sm"
+                      type="button"
+                      :disabled="busy || comment.pending || fromCache"
+                      @click="startEditing(comment)"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      class="btn btn-outline-danger btn-sm"
+                      type="button"
+                      :disabled="busy || comment.pending || fromCache"
+                      @click="deleteComment(comment)"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </template>
               </article>
-            </div>
+            </template>
           </div>
         </div>
       </div>
 
-      <form ref="formElement" class="col-lg-5" novalidate @submit.prevent="submitComment">
+      <div class="col-lg-5">
         <div class="card">
           <div class="card-body p-4">
-            <p class="small fw-bold text-success text-uppercase mb-1">Comment form</p>
+            <p class="small fw-bold text-success text-uppercase mb-1">Join the discussion</p>
             <h2 class="h3">Add a comment</h2>
-
-            <div class="mb-3">
-              <label class="form-label" for="comment-name">Display name</label>
-              <input
-                id="comment-name"
-                v-model="form.name"
-                class="form-control"
-                :class="{ 'is-invalid': errors.name }"
-                type="text"
-                required
-                minlength="2"
-                maxlength="30"
-                autocomplete="name"
-                aria-describedby="comment-name-error"
-                @blur="validateForm"
-              />
-              <div id="comment-name-error" class="invalid-feedback">{{ errors.name }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label" for="comment-email">Email</label>
-              <input
-                id="comment-email"
-                v-model="form.email"
-                class="form-control"
-                :class="{ 'is-invalid': errors.email }"
-                type="email"
-                required
-                autocomplete="email"
-                aria-describedby="comment-email-help comment-email-error"
-                @blur="validateForm"
-              />
-              <div id="comment-email-help" class="form-text">
-                Used for validation only; it will not be displayed.
-              </div>
-              <div id="comment-email-error" class="invalid-feedback">{{ errors.email }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label" for="comment-message">Comment</label>
-              <textarea
-                id="comment-message"
-                v-model="form.message"
-                class="form-control"
-                :class="{ 'is-invalid': errors.message }"
-                rows="5"
-                required
-                minlength="10"
-                maxlength="300"
-                aria-describedby="comment-message-count comment-message-error"
-                @blur="validateForm"
-              ></textarea>
-              <div id="comment-message-count" class="form-text text-end">
-                {{ form.message.length }}/300
-              </div>
-              <div id="comment-message-error" class="invalid-feedback">{{ errors.message }}</div>
-            </div>
-
-            <button class="btn btn-primary" type="submit">Submit for review</button>
-            <div v-if="successMessage" class="alert alert-success mt-3 mb-0" role="status">
-              {{ successMessage }}
-            </div>
+            <p v-if="!authReady" role="status">Loading your account…</p>
+            <p v-else-if="!user" class="mb-0">
+              <RouterLink :to="{ name: 'login', query: { redirect: route.fullPath } }"
+                >Sign in</RouterLink
+              >
+              to add a comment{{ contentType === 'plant' ? ' and an optional plant rating' : '' }}.
+            </p>
+            <form v-else @submit.prevent="submitComment">
+              <p class="small text-body-secondary">
+                Commenting as {{ user.displayName || 'Gardener' }}
+                <span v-if="isAdmin" class="badge text-bg-warning ms-1">admin</span>
+              </p>
+              <fieldset :disabled="busy || fromCache || !!loadError">
+                <legend class="visually-hidden">Your comment</legend>
+                <div class="mb-3">
+                  <label class="form-label" for="comment-message">Comment</label>
+                  <textarea
+                    id="comment-message"
+                    v-model="message"
+                    class="form-control"
+                    rows="5"
+                    required
+                    minlength="10"
+                    maxlength="300"
+                    aria-describedby="comment-message-help"
+                  ></textarea>
+                  <div id="comment-message-help" class="form-text">
+                    10–300 characters · {{ message.length }}/300
+                  </div>
+                </div>
+                <div v-if="contentType === 'plant'" class="mb-3">
+                  <label for="comment-rating" class="form-label">Plant rating (optional)</label>
+                  <select
+                    id="comment-rating"
+                    v-model="rating"
+                    class="form-select"
+                    aria-describedby="comment-rating-help"
+                  >
+                    <option :value="null">No rating</option>
+                    <option v-for="score in 5" :key="score" :value="score">
+                      {{ score }} / 5 ★
+                    </option>
+                  </select>
+                  <div id="comment-rating-help" class="form-text">
+                    Your latest rated comment counts towards this plant's average.
+                  </div>
+                </div>
+                <button class="btn btn-primary" type="submit">
+                  {{ busy ? 'Saving…' : 'Post comment' }}
+                </button>
+              </fieldset>
+            </form>
           </div>
         </div>
-      </form>
+      </div>
     </div>
+    <p v-if="actionError" class="alert alert-danger mt-3 mb-0" role="alert">{{ actionError }}</p>
+    <p v-if="successMessage" class="alert alert-success mt-3 mb-0" role="status">
+      {{ successMessage }}
+    </p>
   </section>
 </template>
+
+<style scoped>
+.comment-message {
+  white-space: pre-wrap;
+}
+</style>

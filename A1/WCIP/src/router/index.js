@@ -1,6 +1,31 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { authInitialized, user, waitForAdminRole } from '@/services/auth'
 
 const routes = [
+  {
+    path: '/status',
+    name: 'status',
+    component: () => import('@/views/StatusView.vue'),
+    meta: { title: 'Site status', requiresAuth: true, requiresAdmin: true },
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/views/AuthView.vue'),
+    meta: { title: 'Sign in', guestOnly: true },
+  },
+  {
+    path: '/register',
+    name: 'register',
+    component: () => import('@/views/AuthView.vue'),
+    meta: { title: 'Create an account', guestOnly: true },
+  },
+  {
+    path: '/account',
+    name: 'account',
+    component: () => import('@/views/AccountView.vue'),
+    meta: { title: 'Your account', requiresAuth: true },
+  },
   {
     path: '/',
     name: 'home',
@@ -22,31 +47,11 @@ const routes = [
   {
     path: '/guides',
     name: 'guides',
-    component: () => import('@/views/SectionLandingView.vue'),
-    props: {
-      eyebrow: 'Gardening Guides',
-      title: 'Practical guides for growing well',
-      description:
-        'Begin with a short, achievable project designed for Melbourne homes, families and schools.',
-      cardTitle: 'Build a Pollinator Pot',
-      cardDescription: 'A 25-minute beginner project for a balcony, courtyard or classroom.',
-      target: { name: 'guide-detail' },
-      action: 'Open guide',
-      image: {
-        src: '/images/pages/pollinator-pot.jpg',
-        alt: 'A container garden of flowers in large planters',
-        credit: {
-          author: 'Share Bear',
-          license: 'Public domain',
-          licenseUrl: 'https://commons.wikimedia.org/wiki/Template:PD-self',
-          sourceUrl: 'https://commons.wikimedia.org/wiki/File:495_-_Bathrust_NB.JPG',
-        },
-      },
-    },
+    component: () => import('@/views/GuidesView.vue'),
     meta: { title: 'Gardening Guides' },
   },
   {
-    path: '/guides/build-a-pollinator-pot',
+    path: '/guides/:slug',
     name: 'guide-detail',
     component: () => import('@/views/GuideDetailView.vue'),
     meta: { title: 'Build a Pollinator Pot' },
@@ -92,6 +97,16 @@ const router = createRouter({
   scrollBehavior() {
     return { top: 0 }
   },
+})
+
+router.beforeEach(async (to) => {
+  if (!to.meta.requiresAuth && !to.meta.guestOnly) return
+  await authInitialized
+  if (to.meta.requiresAuth && !user.value) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+  if (to.meta.requiresAdmin && !(await waitForAdminRole())) return { name: 'account' }
+  if (to.meta.guestOnly && user.value) return { name: 'account' }
 })
 
 router.afterEach((to) => {

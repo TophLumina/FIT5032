@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider == 'password';
+    }
+
+    function admin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Keep these keys in sync with the local plant catalog.
+    function knownPlant(key) {
+      return key in [
+        'plant:native-violet', 'plant:coastal-rosemary', 'plant:chocolate-lily',
+        'plant:common-everlasting', 'plant:kidney-weed', 'plant:silver-banksia',
+        'plant:kangaroo-paw', 'plant:common-correa', 'plant:river-mint',
+        'plant:blue-flax-lily', 'plant:cut-leaf-daisy', 'plant:woolly-grevillea',
+        'plant:purple-coral-pea', 'plant:climbing-guinea-flower', 'plant:spiny-headed-mat-rush',
+        'plant:kangaroo-grass', 'plant:common-tussock-grass', 'plant:bulbine-lily',
+        'plant:tall-bluebell', 'plant:austral-storks-bill', 'plant:fairy-fan-flower',
+        'plant:prickly-tea-tree', 'plant:white-correa', 'plant:hop-goodenia'
+      ];
+    }
+
+    function knownDiscussion(key) {
+      return knownPlant(key) || (key.matches('^guide:[a-z0-9-]+$')
+        && exists(/databases/$(database)/documents/discussions/$(key))
+        && get(/databases/$(database)/documents/discussions/$(key)).data.contentType == 'guide');
+    }
+
+    function validComment(key) {
+      let data = request.resource.data;
+      return data.keys().hasAll(['authorUid', 'author', 'message', 'rating', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['authorUid', 'author', 'message', 'rating', 'createdAt', 'updatedAt'])
+        && data.authorUid is string
+        && data.authorUid.size() > 0
+        && data.author is string
+        && data.author.size() >= 1 && data.author.size() <= 30
+        && data.message is string
+        && data.message.size() >= 10 && data.message.size() <= 300
+        && data.message.matches('(?s).*[^\\s].*')
+        && (data.rating == null || (knownPlant(key)
+          && data.rating is int && data.rating >= 1 && data.rating <= 5))
+        && data.createdAt is timestamp
+        && data.updatedAt == request.time;
+    }
+
+    match /admins/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      // Provision roles through Firebase Console / trusted server credentials only.
+      allow list, write: if false;
+    }
+
+    match /guides/{slug} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /users/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || admin());
+      allow list: if admin();
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasAll(['email', 'displayName', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['email', 'displayName', 'updatedAt'])
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 30
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+
+    match /visits/{visitId} {
+      allow create: if visitId.matches('^[a-zA-Z0-9]{20}$')
+        && request.resource.data.keys().hasAll(['visitedAt'])
+        && request.resource.data.keys().hasOnly(['visitedAt'])
+        && request.resource.data.visitedAt == request.time;
+      allow read: if admin();
+      allow update, delete: if false;
+    }
+
+    match /status/{document} {
+      allow read: if admin();
+      allow write: if false;
+    }
+
+    // Status aggregates comments across plant and guide discussions.
+    match /{path=**}/comments/{commentId} {
+      allow read: if admin();
+    }
+
+    match /discussions/{contentKey}/comments/{commentId} {
+      allow read: if knownDiscussion(contentKey);
+      allow create: if knownDiscussion(contentKey) && signedIn()
+        && validComment(contentKey)
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow update: if knownDiscussion(contentKey) && admin()
+        && validComment(contentKey)
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['message', 'rating', 'updatedAt']);
+      allow delete: if knownDiscussion(contentKey) && admin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

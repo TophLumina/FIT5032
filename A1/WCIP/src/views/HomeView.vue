@@ -1,7 +1,9 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import PhotoCredit from '@/components/PhotoCredit.vue'
+import PlantCard from '@/components/PlantCard.vue'
+import { usePlants } from '@/composables/usePlants'
+import { getGuides } from '@/services/content'
 
 const router = useRouter()
 const choices = reactive({ space: '', sunlight: '', experience: 'beginner' })
@@ -12,40 +14,25 @@ const spaces = [
   { title: 'School Garden', detail: 'Durable · learning focused', query: 'school' },
 ]
 
-const seasonalPlants = ref([])
-const seasonalLoadError = ref('')
-const seasonalSlugs = ['native-violet', 'coastal-rosemary', 'silver-banksia']
-
-onMounted(loadSeasonalPlants)
-
-async function loadSeasonalPlants() {
-  seasonalLoadError.value = ''
-
+const featuredGuides = ref([])
+const guidesError = ref('')
+onMounted(async () => {
   try {
-    const response = await fetch(`${import.meta.env.BASE_URL}data/plants.json`)
-    if (!response.ok) throw new Error(`Plant data request failed with status ${response.status}.`)
-
-    const data = await response.json()
-    if (!Array.isArray(data)) throw new TypeError('Plant data must be an array.')
-
-    seasonalPlants.value = seasonalSlugs
-      .map((slug) => data.find((plant) => plant.slug === slug))
-      .filter(Boolean)
+    featuredGuides.value = await getGuides()
   } catch {
-    seasonalLoadError.value = 'Seasonal plant data could not be loaded.'
+    guidesError.value = 'Guides could not be loaded.'
   }
-}
+})
+
+const { plants, error: seasonalLoadError, loadPlants } = usePlants()
+const seasonalSlugs = ['native-violet', 'coastal-rosemary', 'silver-banksia']
+const seasonalPlants = computed(() =>
+  seasonalSlugs.map((slug) => plants.value.find((plant) => plant.slug === slug)).filter(Boolean),
+)
 
 function findPlants() {
   const query = Object.fromEntries(Object.entries(choices).filter(([, value]) => value))
   router.push({ name: 'plants', query })
-}
-
-function formatLabel(value) {
-  return String(value)
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
 }
 </script>
 
@@ -133,37 +120,13 @@ function formatLabel(value) {
             </div>
             <div v-if="seasonalLoadError" class="alert alert-warning" role="alert">
               {{ seasonalLoadError }}
+              <button class="btn btn-outline-warning btn-sm ms-2" type="button" @click="loadPlants">
+                Try again
+              </button>
             </div>
             <div class="row g-3">
               <div v-for="plant in seasonalPlants" :key="plant.id" class="col-md-4">
-                <article class="card card-hover h-100">
-                  <div class="card-body">
-                    <div class="ratio ratio-4x3 overflow-hidden rounded">
-                      <img
-                        :src="plant.image"
-                        :alt="plant.imageAlt"
-                        class="h-100 w-100 object-fit-cover"
-                        loading="lazy"
-                      />
-                    </div>
-                    <PhotoCredit :credit="plant.imageCredit" />
-                    <strong class="d-block mt-2">
-                      <RouterLink
-                        class="stretched-link text-decoration-none"
-                        :to="{ name: 'plant-detail', params: { slug: plant.slug } }"
-                      >
-                        {{ plant.commonName }}
-                      </RouterLink>
-                    </strong>
-                    <small class="d-block text-body-secondary mb-2">
-                      {{ plant.sunlight.map(formatLabel).join(' / ') }} ·
-                      {{ formatLabel(plant.difficulty) }}
-                    </small>
-                    <span class="badge text-bg-light border">
-                      {{ plant.biodiversity.map(formatLabel).join(' / ') }}
-                    </span>
-                  </div>
-                </article>
+                <PlantCard :plant="plant" compact />
               </div>
             </div>
           </div>
@@ -175,19 +138,17 @@ function formatLabel(value) {
           <div class="card-body p-4">
             <p class="small fw-bold text-success text-uppercase mb-1">Learning resources</p>
             <h2 id="learn-title">Learn by doing</h2>
+            <p v-if="guidesError" class="text-body-secondary">{{ guidesError }}</p>
             <div class="list-group">
               <RouterLink
+                v-for="guide in featuredGuides"
+                :key="guide.slug"
                 class="list-group-item list-group-item-action py-3"
-                :to="{ name: 'guide-detail' }"
-                ><strong>Build a Pollinator Pot</strong
-                ><small class="d-block">25 min · Family friendly</small></RouterLink
+                :to="{ name: 'guide-detail', params: { slug: guide.slug } }"
               >
-              <RouterLink
-                class="list-group-item list-group-item-action py-3"
-                :to="{ name: 'guides' }"
-                ><strong>Starting a School Garden</strong
-                ><small class="d-block">Teacher guide · Printable steps</small></RouterLink
-              >
+                <strong>{{ guide.title }}</strong>
+                <small class="d-block">{{ guide.cardDescription || guide.description }}</small>
+              </RouterLink>
             </div>
           </div>
         </div>

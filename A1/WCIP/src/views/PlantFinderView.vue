@@ -1,27 +1,19 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import PhotoCredit from '@/components/PhotoCredit.vue'
+import PlantCard from '@/components/PlantCard.vue'
+import { usePlants } from '@/composables/usePlants'
+import { formatLabel } from '@/utils/plantLabels'
 
 const route = useRoute()
 const router = useRouter()
-
-const plants = ref([])
-const loading = ref(true)
-const loadError = ref('')
-const searchTerm = ref('')
-const sortBy = ref('best')
-
-const filters = reactive({
-  space: [],
-  sunlight: [],
-  difficulty: [],
-  biodiversity: [],
-})
+const { plants, loading, error: loadError, loadPlants } = usePlants()
+const pageSize = 9
 
 const filterGroups = [
   {
     key: 'space',
+    field: 'spaces',
     name: 'Space',
     values: [
       { value: 'balcony', label: 'Balcony' },
@@ -31,6 +23,7 @@ const filterGroups = [
   },
   {
     key: 'sunlight',
+    field: 'sunlight',
     name: 'Sunlight',
     values: [
       { value: 'full-sun', label: 'Full sun' },
@@ -39,7 +32,8 @@ const filterGroups = [
     ],
   },
   {
-    key: 'difficulty',
+    key: 'experience',
+    field: 'difficulty',
     name: 'Difficulty',
     values: [
       { value: 'beginner', label: 'Beginner' },
@@ -47,7 +41,8 @@ const filterGroups = [
     ],
   },
   {
-    key: 'biodiversity',
+    key: 'benefit',
+    field: 'biodiversity',
     name: 'Biodiversity benefit',
     values: [
       { value: 'bees', label: 'Bees' },
@@ -61,137 +56,118 @@ const valueLabels = Object.fromEntries(
   filterGroups.flatMap((group) => group.values.map((option) => [option.value, option.label])),
 )
 
-const filteredPlants = computed(() => {
-  const term = searchTerm.value.trim().toLowerCase()
+function readChoices(query = {}) {
+  const choices = {
+    q: String(query.q ?? '').trim(),
+    sort: ['best', 'name-asc', 'name-desc'].includes(query.sort) ? query.sort : 'best',
+  }
+  for (const { key } of filterGroups) {
+    const values = [query[key]]
+      .flat()
+      .filter(Boolean)
+      .flatMap((value) => String(value).split(','))
+    choices[key] = [
+      ...new Set(
+        values.flatMap((value) =>
+          key === 'benefit' && value === 'pollinators' ? ['bees', 'butterflies'] : [value],
+        ),
+      ),
+    ]
+  }
+  return choices
+}
 
-  return plants.value.filter((plant) => {
-    const searchableText = [
+// The URL owns applied choices. Form edits take effect only when submitted.
+const applied = computed(() => readChoices(route.query))
+const draft = ref({})
+watch(
+  applied,
+  (choices) => {
+    draft.value = structuredClone(choices)
+  },
+  { immediate: true },
+)
+
+const sortedPlants = computed(() => {
+  const term = applied.value.q.toLowerCase()
+  const results = plants.value.filter((plant) => {
+    const text = [
       plant.commonName,
       plant.scientificName,
       plant.status,
-      plant.difficulty,
-      ...plant.spaces,
-      ...plant.sunlight,
-      ...plant.biodiversity,
+      ...filterGroups.flatMap(({ field }) => plant[field]),
     ]
       .join(' ')
       .toLowerCase()
-
-    const matchesSearch = !term || searchableText.includes(term)
-    const matchesSpace =
-      filters.space.length === 0 || filters.space.some((value) => plant.spaces.includes(value))
-    const matchesSunlight =
-      filters.sunlight.length === 0 ||
-      filters.sunlight.some((value) => plant.sunlight.includes(value))
-    const matchesDifficulty =
-      filters.difficulty.length === 0 || filters.difficulty.includes(plant.difficulty)
-    const matchesBiodiversity =
-      filters.biodiversity.length === 0 ||
-      filters.biodiversity.some((value) => plant.biodiversity.includes(value))
-
     return (
-      matchesSearch && matchesSpace && matchesSunlight && matchesDifficulty && matchesBiodiversity
+      (!term || text.includes(term)) &&
+      filterGroups.every(
+        ({ key, field }) =>
+          !applied.value[key].length ||
+          applied.value[key].some((value) => [plant[field]].flat().includes(value)),
+      )
     )
   })
-})
-
-const sortedPlants = computed(() => {
-  const results = [...filteredPlants.value]
-
-  if (sortBy.value === 'name-asc') {
+  if (applied.value.sort === 'name-asc')
     return results.sort((a, b) => a.commonName.localeCompare(b.commonName))
-  }
-
-  if (sortBy.value === 'name-desc') {
+  if (applied.value.sort === 'name-desc')
     return results.sort((a, b) => b.commonName.localeCompare(a.commonName))
-  }
-
   return results.sort((a, b) => Number(b.featured) - Number(a.featured))
 })
 
+const pageCount = computed(() => Math.max(1, Math.ceil(sortedPlants.value.length / pageSize)))
+const currentPage = computed(() => {
+  const page = Number(route.query.page)
+  return Number.isSafeInteger(page) && page > 0 ? Math.min(page, pageCount.value) : 1
+})
+const firstResult = computed(() => (currentPage.value - 1) * pageSize)
+const paginatedPlants = computed(() =>
+  sortedPlants.value.slice(firstResult.value, firstResult.value + pageSize),
+)
 const activeChoices = computed(() => {
-  const choices = Object.values(filters)
-    .flat()
+  const choices = filterGroups
+    .flatMap(({ key }) => applied.value[key])
     .map((value) => valueLabels[value] ?? formatLabel(value))
-
-  if (searchTerm.value.trim()) choices.unshift(`“${searchTerm.value.trim()}”`)
+  if (applied.value.q) choices.unshift(`“${applied.value.q}”`)
   return choices.join(' · ')
 })
 
 watch(
-  () => route.query,
-  () => syncFromRoute(),
-  { deep: true, immediate: true },
+  [currentPage, loading, loadError, () => route.query.page],
+  () => {
+    if (route.name !== 'plants' || loading.value || loadError.value) return
+    const page = currentPage.value > 1 ? String(currentPage.value) : undefined
+    if (route.query.page !== page)
+      router.replace({ name: 'plants', query: { ...route.query, page } })
+  },
+  { immediate: true },
 )
 
-onMounted(loadPlants)
-
-async function loadPlants() {
-  loading.value = true
-  loadError.value = ''
-
-  try {
-    const response = await fetch(`${import.meta.env.BASE_URL}data/plants.json`)
-    if (!response.ok) throw new Error(`Plant data request failed with status ${response.status}.`)
-
-    const data = await response.json()
-    if (!Array.isArray(data)) throw new TypeError('Plant data must be an array.')
-    plants.value = data
-  } catch (error) {
-    loadError.value = error instanceof Error ? error.message : 'Plant data could not be loaded.'
-  } finally {
-    loading.value = false
+function queryFor(choices, page = 1) {
+  const query = {}
+  if (choices.q.trim()) query.q = choices.q.trim()
+  if (choices.sort !== 'best') query.sort = choices.sort
+  for (const { key } of filterGroups) {
+    if (choices[key].length) query[key] = choices[key].join(',')
   }
-}
-
-function parseQueryValues(value) {
-  const values = Array.isArray(value) ? value : [value]
-  return values.filter(Boolean).flatMap((item) => String(item).split(','))
-}
-
-function syncFromRoute() {
-  searchTerm.value = String(route.query.q ?? '')
-  sortBy.value = ['best', 'name-asc', 'name-desc'].includes(route.query.sort)
-    ? route.query.sort
-    : 'best'
-  filters.space = parseQueryValues(route.query.space)
-  filters.sunlight = parseQueryValues(route.query.sunlight)
-  filters.difficulty = parseQueryValues(route.query.experience)
-
-  const benefits = parseQueryValues(route.query.benefit)
-  filters.biodiversity = benefits.includes('pollinators')
-    ? [...new Set([...benefits.filter((value) => value !== 'pollinators'), 'bees', 'butterflies'])]
-    : benefits
+  if (page > 1) query.page = String(page)
+  return query
 }
 
 function applyFilters() {
-  const query = {}
-  if (searchTerm.value.trim()) query.q = searchTerm.value.trim()
-  if (filters.space.length) query.space = filters.space.join(',')
-  if (filters.sunlight.length) query.sunlight = filters.sunlight.join(',')
-  if (filters.difficulty.length) query.experience = filters.difficulty.join(',')
-  if (filters.biodiversity.length) query.benefit = filters.biodiversity.join(',')
-  if (sortBy.value !== 'best') query.sort = sortBy.value
-  router.push({ name: 'plants', query })
+  router.push({ name: 'plants', query: queryFor(draft.value) })
+}
+
+function goToPage(page) {
+  if (page >= 1 && page <= pageCount.value)
+    router.push({ name: 'plants', query: queryFor(applied.value, page) })
 }
 
 function reset() {
-  searchTerm.value = ''
-  sortBy.value = 'best'
-  Object.keys(filters).forEach((key) => {
-    filters[key] = []
-  })
+  draft.value = readChoices()
   router.push({ name: 'plants' })
 }
-
-function formatLabel(value) {
-  return String(value)
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-}
 </script>
-
 <template>
   <div class="container-xxl py-5">
     <nav aria-label="breadcrumb">
@@ -204,6 +180,9 @@ function formatLabel(value) {
       <p class="small fw-bold text-success text-uppercase mb-1">Plant finder</p>
       <h1 class="display-4 fw-bold">Find plants for your space</h1>
       <p class="lead">Filter practical, responsible choices for Melbourne gardens.</p>
+      <p class="text-body-secondary">
+        Choose your conditions, then select Search or Apply filters.
+      </p>
     </header>
 
     <form class="row g-2 mb-4" role="search" @submit.prevent="applyFilters">
@@ -211,7 +190,7 @@ function formatLabel(value) {
         <label class="visually-hidden" for="plant-search">Search by plant name</label>
         <input
           id="plant-search"
-          v-model="searchTerm"
+          v-model="draft.q"
           class="form-control form-control-lg"
           type="search"
           placeholder="Search by common or scientific name…"
@@ -219,12 +198,7 @@ function formatLabel(value) {
       </div>
       <div class="col-md-4 col-lg-3">
         <label class="visually-hidden" for="plant-sort">Sort results</label>
-        <select
-          id="plant-sort"
-          v-model="sortBy"
-          class="form-select form-select-lg"
-          @change="applyFilters"
-        >
+        <select id="plant-sort" v-model="draft.sort" class="form-select form-select-lg">
           <option value="best">Sort: Best match</option>
           <option value="name-asc">Name: A–Z</option>
           <option value="name-desc">Name: Z–A</option>
@@ -249,7 +223,7 @@ function formatLabel(value) {
               <div v-for="option in group.values" :key="option.value" class="form-check">
                 <input
                   :id="`${group.key}-${option.value}`"
-                  v-model="filters[group.key]"
+                  v-model="draft[group.key]"
                   :value="option.value"
                   class="form-check-input"
                   type="checkbox"
@@ -293,42 +267,57 @@ function formatLabel(value) {
           No plants match these choices. Try removing a filter or resetting the search.
         </div>
 
-        <div v-else class="row g-3">
-          <div v-for="plant in sortedPlants" :key="plant.id" class="col-md-6 col-xl-4">
-            <article class="card card-hover h-100">
-              <div class="card-body">
-                <div class="ratio ratio-4x3 overflow-hidden rounded">
-                  <img
-                    :src="plant.image"
-                    :alt="plant.imageAlt"
-                    class="h-100 w-100 object-fit-cover"
-                    loading="lazy"
-                  />
-                </div>
-                <PhotoCredit :credit="plant.imageCredit" />
-                <span class="badge text-bg-success mb-2">
-                  {{ formatLabel(plant.status) }} · {{ formatLabel(plant.difficulty) }}
-                </span>
-                <h3 class="h5">
-                  <RouterLink
-                    class="stretched-link text-decoration-none"
-                    :to="{ name: 'plant-detail', params: { slug: plant.slug } }"
-                  >
-                    {{ plant.commonName }}
-                  </RouterLink>
-                </h3>
-                <em class="small text-body-secondary">{{ plant.scientificName }}</em>
-                <p class="small border-top pt-3 mt-3 mb-2">
-                  {{ plant.sunlight.map(formatLabel).join(' / ') }} ·
-                  {{ formatLabel(plant.water) }} water
-                </p>
-                <p class="small text-body-secondary mb-2">
-                  {{ plant.spaces.map(formatLabel).join(' / ') }}
-                </p>
-              </div>
-            </article>
+        <template v-else>
+          <p class="small text-body-secondary" role="status">
+            Showing {{ firstResult + 1 }}–{{ firstResult + paginatedPlants.length }} of
+            {{ sortedPlants.length }} plants · Page {{ currentPage }} of {{ pageCount }}
+          </p>
+          <div class="row g-3">
+            <div v-for="plant in paginatedPlants" :key="plant.id" class="col-md-6 col-xl-4">
+              <PlantCard :plant="plant" />
+            </div>
           </div>
-        </div>
+          <nav v-if="pageCount > 1" class="mt-4" aria-label="Plant results pages">
+            <ul class="pagination flex-wrap justify-content-center mb-0">
+              <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                <button
+                  class="page-link"
+                  type="button"
+                  :disabled="currentPage === 1"
+                  @click="goToPage(currentPage - 1)"
+                >
+                  Previous
+                </button>
+              </li>
+              <li
+                v-for="number in pageCount"
+                :key="number"
+                class="page-item"
+                :class="{ active: number === currentPage }"
+              >
+                <button
+                  class="page-link"
+                  type="button"
+                  :aria-label="`Page ${number}`"
+                  :aria-current="number === currentPage ? 'page' : undefined"
+                  @click="goToPage(number)"
+                >
+                  {{ number }}
+                </button>
+              </li>
+              <li class="page-item" :class="{ disabled: currentPage === pageCount }">
+                <button
+                  class="page-link"
+                  type="button"
+                  :disabled="currentPage === pageCount"
+                  @click="goToPage(currentPage + 1)"
+                >
+                  Next
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </template>
       </section>
     </div>
   </div>

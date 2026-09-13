@@ -1,11 +1,37 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { adminRoleReady, authErrorMessage, authReady, isAdmin, logout, user } from '@/services/auth'
 
 const route = useRoute()
 const router = useRouter()
 const mobileOpen = ref(false)
 const searchTerm = ref('')
+const signingOut = ref(false)
+const signOutError = ref('')
+
+watch([isAdmin, adminRoleReady], ([value, ready]) => {
+  if (ready && !value && route.meta.requiresAdmin) router.replace({ name: 'account' })
+})
+
+async function handleSignOut() {
+  signingOut.value = true
+  signOutError.value = ''
+  try {
+    await logout()
+    if (route.meta.requiresAuth) await router.replace({ name: 'login' })
+  } catch (error) {
+    signOutError.value = authErrorMessage(error)
+  } finally {
+    signingOut.value = false
+  }
+}
+
+watch(user, (value) => {
+  if (!value && authReady.value && route.meta.requiresAuth) {
+    router.replace({ name: 'login', query: { redirect: route.fullPath } })
+  }
+})
 
 const navItems = [
   { label: 'Plants', to: { name: 'plants' }, section: '/plants' },
@@ -81,6 +107,29 @@ function submitSearch() {
             />
             <button class="btn btn-outline-primary" type="submit">Search</button>
           </form>
+          <div v-if="authReady" class="d-flex align-items-center gap-2 ms-xl-3">
+            <template v-if="user">
+              <span v-if="isAdmin" class="badge text-bg-warning">admin</span>
+              <RouterLink v-if="isAdmin" class="btn btn-outline-primary" :to="{ name: 'status' }"
+                >Status</RouterLink
+              >
+              <RouterLink class="btn btn-outline-primary" :to="{ name: 'account' }"
+                >My account</RouterLink
+              >
+              <button
+                class="btn btn-primary"
+                type="button"
+                :disabled="signingOut"
+                @click="handleSignOut"
+              >
+                {{ signingOut ? 'Signing out…' : 'Sign out' }}
+              </button>
+            </template>
+            <RouterLink v-else class="btn btn-primary" :to="{ name: 'login' }">Sign in</RouterLink>
+          </div>
+          <p v-if="signOutError" class="text-danger small ms-xl-3 mb-0" role="alert">
+            {{ signOutError }}
+          </p>
         </div>
       </div>
     </nav>

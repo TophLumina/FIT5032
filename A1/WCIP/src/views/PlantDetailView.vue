@@ -1,13 +1,30 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import CommentSection from '@/components/CommentSection.vue'
 import PhotoCredit from '@/components/PhotoCredit.vue'
+import { getGuides } from '@/services/content'
+import { usePlants } from '@/composables/usePlants'
+import { formatLabel, joinLabels } from '@/utils/plantLabels'
+import { safeExternalUrl } from '@/utils/safeUrl'
+
+const relatedGuides = ref([])
+onMounted(async () => {
+  try {
+    relatedGuides.value = await getGuides()
+  } catch {
+    relatedGuides.value = []
+  }
+})
 
 const route = useRoute()
-const plant = ref(null)
-const loading = ref(true)
-const loadError = ref('')
+const { plants, loading, error } = usePlants()
+const plant = computed(() => plants.value.find((item) => item.slug === route.params.slug))
+const loadError = computed(
+  () =>
+    error.value ||
+    (!loading.value && !plant.value ? 'This plant could not be found in the plant data.' : ''),
+)
 
 const tags = computed(() => {
   if (!plant.value) return []
@@ -32,6 +49,7 @@ const facts = computed(() => {
 
 const summary = computed(() => {
   if (!plant.value) return ''
+  if (plant.value.description) return plant.value.description
 
   return `${plant.value.commonName} is a ${formatLabel(plant.value.status).toLowerCase()} plant suited to ${joinLabels(plant.value.spaces).toLowerCase()} settings with ${joinLabels(plant.value.sunlight).toLowerCase()}.`
 })
@@ -75,45 +93,12 @@ const biodiversityText = computed(() => {
 })
 
 watch(
-  () => route.params.slug,
-  () => loadPlant(),
+  plant,
+  (value) => {
+    if (value) document.title = `${value.commonName} | What Can I Plant?`
+  },
   { immediate: true },
 )
-
-async function loadPlant() {
-  loading.value = true
-  loadError.value = ''
-  plant.value = null
-
-  try {
-    const response = await fetch(`${import.meta.env.BASE_URL}data/plants.json`)
-    if (!response.ok) throw new Error(`Plant data request failed with status ${response.status}.`)
-
-    const data = await response.json()
-    if (!Array.isArray(data)) throw new TypeError('Plant data must be an array.')
-
-    const match = data.find((item) => item.slug === route.params.slug)
-    if (!match) throw new Error('This plant could not be found in the plant data.')
-
-    plant.value = match
-    document.title = `${match.commonName} | What Can I Plant?`
-  } catch (error) {
-    loadError.value = error instanceof Error ? error.message : 'Plant data could not be loaded.'
-  } finally {
-    loading.value = false
-  }
-}
-
-function formatLabel(value) {
-  return String(value)
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-}
-
-function joinLabels(values) {
-  return values.map(formatLabel).join(' / ')
-}
 </script>
 
 <template>
@@ -221,6 +206,19 @@ function joinLabels(values) {
                   </div>
                 </div>
               </div>
+              <div v-if="plant.growingNotes" class="border-top pt-3 mt-4">
+                <h3 class="h5">Growing notes</h3>
+                <p>{{ plant.growingNotes }}</p>
+                <a
+                  v-if="plant.informationSource"
+                  :href="safeExternalUrl(plant.informationSource.url)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="small"
+                >
+                  Plant information: {{ plant.informationSource.name }}
+                </a>
+              </div>
             </div>
           </div>
         </section>
@@ -252,38 +250,21 @@ function joinLabels(values) {
       <section class="mt-5" aria-labelledby="related-guides">
         <h2 id="related-guides" class="h4">Related guides</h2>
         <div class="row g-3">
-          <div
-            v-for="item in [
-              {
-                title: 'Build a Pollinator Pot',
-                detail: 'Family gardening · 25 min',
-                to: { name: 'guide-detail' },
-              },
-              {
-                title: 'Browse gardening guides',
-                detail: 'Practical projects for small spaces',
-                to: { name: 'guides' },
-              },
-              {
-                title: 'Compare suitable plants',
-                detail: 'Return to the filtered plant list',
-                to: { name: 'plants' },
-              },
-            ]"
-            :key="item.title"
-            class="col-md-4"
-          >
-            <RouterLink class="card card-hover h-100 text-decoration-none" :to="item.to">
+          <div v-for="item in relatedGuides" :key="item.title" class="col-md-4">
+            <RouterLink
+              class="card card-hover h-100 text-decoration-none"
+              :to="{ name: 'guide-detail', params: { slug: item.slug } }"
+            >
               <div class="card-body">
                 <strong>{{ item.title }}</strong>
-                <small class="d-block">{{ item.detail }}</small>
+                <small class="d-block">{{ item.cardDescription || item.description }}</small>
               </div>
             </RouterLink>
           </div>
         </div>
       </section>
 
-      <CommentSection content-type="plant" :content-slug="plant.slug" />
+      <CommentSection :key="plant.slug" content-type="plant" :content-slug="plant.slug" />
     </template>
   </div>
 </template>
