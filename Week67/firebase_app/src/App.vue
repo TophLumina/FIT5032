@@ -1,6 +1,5 @@
 <script setup>
 import BHeader from './components/BHeader.vue';
-import router from './router/index.js';
 </script>
 
 <template>

@@ -1,8 +1,3 @@
-<script setup lang="ts">
-import router from '@/router';
-
-</script>
-
 <template>
   <!-- Using Bootstrap's Header template (starter code) -->
   <!-- https://getbootstrap.com/docs/5.0/examples/headers/ -->
@@ -15,7 +10,11 @@ import router from '@/router';
         </li>
 
         <li>
-          <router-link to="/FireSignin" class="nav-lin" active-class="active">Firebase Signin</router-link>
+          <router-link to="/FireSignin" class="nav-link" active-class="active">Firebase Signin</router-link>
+        </li>
+
+        <li>
+          <router-link to="/FireAddBook" class="nav-link" active-class="active">Firebase AddBook</router-link>
         </li>
       </ul>
     </header>
