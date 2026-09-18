@@ -105,15 +105,9 @@ service cloud.firestore {
       allow delete: if knownDiscussion(contentKey) && admin();
     }
 
-    // Week 6-7 uses the same Firebase project for its Add Book form.
+    // Week 6-7 allows all users to read and write books.
     match /books/{bookId} {
-      allow create: if signedIn()
-        && request.resource.data.keys().hasAll(['isbn', 'name'])
-        && request.resource.data.keys().hasOnly(['isbn', 'name'])
-        && request.resource.data.isbn is string
-        && request.resource.data.isbn.size() > 0
-        && request.resource.data.name is string
-        && request.resource.data.name.size() > 0;
+      allow read, write: if true;
     }
 
     match /{document=**} {
