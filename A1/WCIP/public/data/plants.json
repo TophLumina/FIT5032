@@ -250,5 +250,329 @@
     "water": "low",
     "biodiversity": ["bees", "birds"],
     "featured": false
+  },
+  {
+    "id": 13,
+    "slug": "purple-coral-pea",
+    "commonName": "Purple Coral Pea",
+    "scientificName": "Hardenbergia violacea",
+    "image": "/images/plants/purple-coral-pea.jpg",
+    "imageAlt": "Purple Coral Pea (Hardenbergia violacea)",
+    "imageCredit": {
+      "author": "Groogle",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wild-growing-Hardenbergia-violacea-2.jpeg"
+    },
+    "status": "native",
+    "difficulty": "beginner",
+    "spaces": ["balcony", "courtyard", "school"],
+    "sunlight": ["full-sun", "part-shade"],
+    "water": "low",
+    "biodiversity": ["bees"],
+    "featured": false,
+    "description": "A twining native climber with purple pea flowers in winter and spring. Train it on a trellis to bring flowers into a small garden.",
+    "growingNotes": "Provide support for climbing forms and choose a variety suited to your local climate. A sunny position usually produces more flowers.",
+    "informationSource": {
+      "name": "Botanic Gardens of Sydney",
+      "url": "https://www.botanicgardens.org.au/discover-and-learn/gardening-home/growing-native-gardens-and-bush-foods/growing-purple-coral-pea"
+    }
+  },
+  {
+    "id": 14,
+    "slug": "climbing-guinea-flower",
+    "commonName": "Climbing Guinea Flower",
+    "scientificName": "Hibbertia scandens",
+    "image": "/images/plants/climbing-guinea-flower.jpg",
+    "imageAlt": "Climbing Guinea Flower (Hibbertia scandens)",
+    "imageCredit": {
+      "author": "Casliber",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hibbertia_scandens_orig.jpg"
+    },
+    "status": "native",
+    "difficulty": "intermediate",
+    "spaces": ["courtyard", "school"],
+    "sunlight": ["full-sun", "part-shade"],
+    "water": "moderate",
+    "biodiversity": ["bees"],
+    "featured": false,
+    "description": "A vigorous climber with large yellow flowers that can cover a fence or spread over a bank.",
+    "growingNotes": "Allow room for its spreading stems and provide a sturdy support. Choose soil with good drainage; flowering is strongest in full sun.",
+    "informationSource": {
+      "name": "Australian Native Plants Society",
+      "url": "https://anpsa.org.au/plant_profiles/hibbertia-scandens/"
+    }
+  },
+  {
+    "id": 15,
+    "slug": "spiny-headed-mat-rush",
+    "commonName": "Spiny-headed Mat-rush",
+    "scientificName": "Lomandra longifolia",
+    "image": "/images/plants/spiny-headed-mat-rush.jpg",
+    "imageAlt": "Spiny-headed Mat-rush (Lomandra longifolia)",
+    "imageCredit": {
+      "author": "Eric in SF",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Lomandra_longifolia.jpg"
+    },
+    "status": "native",
+    "difficulty": "beginner",
+    "spaces": ["balcony", "courtyard", "school"],
+    "sunlight": ["full-sun", "part-shade"],
+    "water": "low",
+    "biodiversity": ["butterflies"],
+    "featured": false,
+    "description": "A robust clumping plant with long strap-like leaves, useful for adding evergreen texture to garden beds and large containers.",
+    "growingNotes": "Water while establishing its roots. Once established it tolerates dry periods and a broad range of soils. Allow space for the arching foliage.",
+    "informationSource": {
+      "name": "Australian National Botanic Gardens",
+      "url": "https://www.anbg.gov.au/gnp/interns-2007/lomandra-longifolia.html"
+    }
+  },
+  {
+    "id": 16,
+    "slug": "kangaroo-grass",
+    "commonName": "Kangaroo Grass",
+    "scientificName": "Themeda triandra",
+    "image": "/images/plants/kangaroo-grass.jpg",
+    "imageAlt": "Kangaroo Grass (Themeda triandra)",
+    "imageCredit": {
+      "author": "Peripitus",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Themeda_triandra_-_kangaroo_grass.jpg"
+    },
+    "status": "native",
+    "difficulty": "beginner",
+    "spaces": ["courtyard", "school"],
+    "sunlight": ["full-sun", "part-shade"],
+    "water": "low",
+    "biodiversity": ["birds", "butterflies"],
+    "featured": false,
+    "description": "A native tussock grass with distinctive red-brown summer seed heads. Its changing leaf colour adds seasonal interest to habitat gardens.",
+    "growingNotes": "Choose locally grown nursery stock where possible. Water during establishment, then reduce watering. Remove old seed stems and rake out dead foliage as needed.",
+    "informationSource": {
+      "name": "Australian National Botanic Gardens",
+      "url": "https://www.anbg.gov.au/gnp/interns-2004/themeda-triandra.html"
+    }
+  },
+  {
+    "id": 17,
+    "slug": "common-tussock-grass",
+    "commonName": "Common Tussock Grass",
+    "scientificName": "Poa labillardierei",
+    "image": "/images/plants/common-tussock-grass.jpg",
+    "imageAlt": "Common Tussock Grass (Poa labillardierei)",
+    "imageCredit": {
+      "author": "Macleay Grass Man",
+      "license": "CC BY 2.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Poa_labillardierei.jpg"
+    },
+    "status": "native",
+    "difficulty": "beginner",
+    "spaces": ["courtyard", "school"],
+    "sunlight": ["full-sun", "part-shade"],
+    "water": "low",
+    "biodiversity": ["birds", "butterflies"],
+    "featured": false,
+    "description": "A dense ornamental grass with blue-green to grey-green foliage and airy flower stems in spring and summer.",
+    "growingNotes": "Keep the soil moist while young plants establish. Leave enough room for a mature clump, which can reach around 1.2 metres in height.",
+    "informationSource": {
+      "name": "Australian National Botanic Gardens",
+      "url": "https://www.anbg.gov.au/gnp/trainees-2016/poa-labillardierei.html"
+    }
+  },
+  {
+    "id": 18,
+    "slug": "bulbine-lily",
+    "commonName": "Bulbine Lily",
+    "scientificName": "Bulbine bulbosa",
+    "image": "/images/plants/bulbine-lily.jpg",
+    "imageAlt": "Bulbine Lily (Bulbine bulbosa)",
+    "imageCredit": {
+      "author": "Velela",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bulbine_bulbosa_flower.jpg"
+    },
+    "status": "native",
+    "difficulty": "beginner",
+    "spaces": ["balcony", "courtyard", "school"],
+    "sunlight": ["full-sun", "part-shade"],
+    "water": "moderate",
+    "biodiversity": ["bees"],
+    "featured": false,
+    "description": "A tufted perennial with succulent leaves and bright yellow star-shaped flowers. Plant several together in a pot, rockery or garden border.",
+    "growingNotes": "Use soil with reasonable drainage and water during active growth. Individual flowers are short-lived, with new flowers opening along the stem.",
+    "informationSource": {
+      "name": "Australian National Botanic Gardens",
+      "url": "https://www.anbg.gov.au/gnp/interns-2003/bulbine-bulbosa.html"
+    }
+  },
+  {
+    "id": 19,
+    "slug": "tall-bluebell",
+    "commonName": "Tall Bluebell",
+    "scientificName": "Wahlenbergia stricta",
+    "image": "/images/plants/tall-bluebell.jpg",
+    "imageAlt": "Tall Bluebell (Wahlenbergia stricta)",
+    "imageCredit": {
+      "author": "AYArktos",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wahlenbergia_Stricta_Red_Hill.jpg"
+    },
+    "status": "native",
+    "difficulty": "beginner",
+    "spaces": ["balcony", "courtyard", "school"],
+    "sunlight": ["full-sun", "part-shade"],
+    "water": "moderate",
+    "biodiversity": ["bees"],
+    "featured": false,
+    "description": "A clumping native perennial bearing delicate blue bell-shaped flowers in spring and summer, suited to cottage gardens and containers.",
+    "growingNotes": "Choose a sunny or lightly shaded position with well-drained soil. Check container moisture regularly during warm weather.",
+    "informationSource": {
+      "name": "Plantmark",
+      "url": "https://www.plantmark.com.au/wahlenbergia-stricta"
+    }
+  },
+  {
+    "id": 20,
+    "slug": "austral-storks-bill",
+    "commonName": "Austral Stork's-bill",
+    "scientificName": "Pelargonium australe",
+    "image": "/images/plants/austral-storks-bill.jpg",
+    "imageAlt": "Austral Stork's-bill (Pelargonium australe)",
+    "imageCredit": {
+      "author": "Magnus Manske",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pelargonium_australe_(Geraniaceae)_flower.JPG"
+    },
+    "status": "native",
+    "difficulty": "beginner",
+    "spaces": ["balcony", "courtyard", "school"],
+    "sunlight": ["full-sun", "part-shade"],
+    "water": "low",
+    "biodiversity": ["butterflies"],
+    "featured": false,
+    "description": "A native perennial with soft foliage and pale flowers marked with darker veins. It suits rockeries, cottage gardens and pots.",
+    "growingNotes": "Grow in well-drained soil with sun or dappled shade. Established plants tolerate dry conditions but may die back to their rootstock in hot weather.",
+    "informationSource": {
+      "name": "Yarra Ranges Council",
+      "url": "https://www.yarraranges.vic.gov.au/PlantDirectory/Herbs-Groundcovers/Pelargonium-australe"
+    }
+  },
+  {
+    "id": 21,
+    "slug": "fairy-fan-flower",
+    "commonName": "Fairy Fan-flower",
+    "scientificName": "Scaevola aemula",
+    "image": "/images/plants/fairy-fan-flower.jpg",
+    "imageAlt": "Fairy Fan-flower (Scaevola aemula)",
+    "imageCredit": {
+      "author": "Nemracc",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Scaevola_aemula_Botanical_Garden_Heidelberg.JPG"
+    },
+    "status": "native",
+    "difficulty": "intermediate",
+    "spaces": ["balcony", "courtyard"],
+    "sunlight": ["full-sun"],
+    "water": "moderate",
+    "biodiversity": ["bees", "butterflies"],
+    "featured": false,
+    "description": "A low-growing perennial with purple to blue fan-shaped flowers, useful for a sunny container or a sheltered garden edge.",
+    "growingNotes": "Choose well-drained sandy soil and protect plants from frost. A sheltered position is particularly useful in colder parts of Melbourne.",
+    "informationSource": {
+      "name": "Australian National Botanic Gardens",
+      "url": "https://www.anbg.gov.au/gnp/interns-2002/scaevola-aemula.html"
+    }
+  },
+  {
+    "id": 22,
+    "slug": "prickly-tea-tree",
+    "commonName": "Prickly Tea-tree",
+    "scientificName": "Leptospermum continentale",
+    "image": "/images/plants/prickly-tea-tree.jpg",
+    "imageAlt": "Prickly Tea-tree (Leptospermum continentale)",
+    "imageCredit": {
+      "author": "R.W. Purdie",
+      "license": "CC BY 3.0 au",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/au/deed.en",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Leptospermum_continentale_flowers.jpg"
+    },
+    "status": "native",
+    "difficulty": "beginner",
+    "spaces": ["courtyard", "school"],
+    "sunlight": ["full-sun", "part-shade"],
+    "water": "moderate",
+    "biodiversity": ["birds", "butterflies"],
+    "featured": false,
+    "description": "A hardy shrub with small white flowers in late spring and early summer. It can form a screen in a garden with enough space.",
+    "growingNotes": "Allow around two metres of space for typical forms, with some growing larger. This species tolerates frost and can suit poorly drained ground.",
+    "informationSource": {
+      "name": "Australian National Botanic Gardens",
+      "url": "https://www.anbg.gov.au/leptospermum/leptospermum-continentale.html"
+    }
+  },
+  {
+    "id": 23,
+    "slug": "white-correa",
+    "commonName": "White Correa",
+    "scientificName": "Correa alba",
+    "image": "/images/plants/white-correa.jpg",
+    "imageAlt": "White Correa (Correa alba)",
+    "imageCredit": {
+      "author": "JJ Harrison",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Correa_Alba_RTBG.jpg"
+    },
+    "status": "native",
+    "difficulty": "beginner",
+    "spaces": ["balcony", "courtyard", "school"],
+    "sunlight": ["full-sun", "part-shade"],
+    "water": "low",
+    "biodiversity": ["birds", "butterflies"],
+    "featured": false,
+    "description": "A coastal shrub with rounded leaves and white flowers that provides habitat value for birds and butterflies.",
+    "growingNotes": "Choose a well-drained position. Allow for its spreading growth; use a compact form and a generous container where space is limited.",
+    "informationSource": {
+      "name": "City of Kingston",
+      "url": "https://www.kingston.vic.gov.au/environment/trees-plants-and-nature-strips/gardens-for-wildlife/indigenous-plants"
+    }
+  },
+  {
+    "id": 24,
+    "slug": "hop-goodenia",
+    "commonName": "Hop Goodenia",
+    "scientificName": "Goodenia ovata",
+    "image": "/images/plants/hop-goodenia.jpg",
+    "imageAlt": "Hop Goodenia (Goodenia ovata)",
+    "imageCredit": {
+      "author": "Allthingsnative",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Goodenia_ovata_image_02.jpg"
+    },
+    "status": "native",
+    "difficulty": "beginner",
+    "spaces": ["courtyard", "school"],
+    "sunlight": ["full-sun", "part-shade", "shade"],
+    "water": "moderate",
+    "biodiversity": ["birds", "butterflies"],
+    "featured": false,
+    "description": "A leafy native shrub with yellow flowers, useful for adding cover and habitat to a courtyard or school garden.",
+    "growingNotes": "Give this spreading shrub room to grow. It tolerates a range of light levels, including shade; keep young plants watered while they establish.",
+    "informationSource": {
+      "name": "City of Kingston",
+      "url": "https://www.kingston.vic.gov.au/environment/trees-plants-and-nature-strips/gardens-for-wildlife/indigenous-plants"
+    }
   }
 ]

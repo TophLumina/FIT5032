@@ -1,0 +1,22 @@
+<template>
+  <!-- Using Bootstrap's Header template (starter code) -->
+  <!-- https://getbootstrap.com/docs/5.0/examples/headers/ -->
+  <div class="container">
+    <header class="d-flex justify-content-center py-3">
+      <ul class="nav nav-pills">
+
+        <li class="nav-item">
+          <router-link to="/FireLogin" class="nav-link" active-class="active">FireBase Login</router-link>
+        </li>
+
+        <li>
+          <router-link to="/FireSignin" class="nav-link" active-class="active">Firebase Signin</router-link>
+        </li>
+
+        <li>
+          <router-link to="/FireAddBook" class="nav-link" active-class="active">Firebase AddBook</router-link>
+        </li>
+      </ul>
+    </header>
+  </div>
+</template>
