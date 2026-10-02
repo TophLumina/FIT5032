@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import PhotoCredit from '@/components/PhotoCredit.vue'
+import { getPlants } from '@/services/plants'
 
 const router = useRouter()
 const choices = reactive({ space: '', sunlight: '', experience: 'beginner' })
@@ -22,11 +23,7 @@ async function loadSeasonalPlants() {
   seasonalLoadError.value = ''
 
   try {
-    const response = await fetch(`${import.meta.env.BASE_URL}data/plants.json`)
-    if (!response.ok) throw new Error(`Plant data request failed with status ${response.status}.`)
-
-    const data = await response.json()
-    if (!Array.isArray(data)) throw new TypeError('Plant data must be an array.')
+    const data = await getPlants()
 
     seasonalPlants.value = seasonalSlugs
       .map((slug) => data.find((plant) => plant.slug === slug))

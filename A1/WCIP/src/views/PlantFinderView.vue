@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import PhotoCredit from '@/components/PhotoCredit.vue'
+import { getPlants } from '@/services/plants'
 
 const route = useRoute()
 const router = useRouter()
@@ -131,12 +132,7 @@ async function loadPlants() {
   loadError.value = ''
 
   try {
-    const response = await fetch(`${import.meta.env.BASE_URL}data/plants.json`)
-    if (!response.ok) throw new Error(`Plant data request failed with status ${response.status}.`)
-
-    const data = await response.json()
-    if (!Array.isArray(data)) throw new TypeError('Plant data must be an array.')
-    plants.value = data
+    plants.value = await getPlants()
   } catch (error) {
     loadError.value = error instanceof Error ? error.message : 'Plant data could not be loaded.'
   } finally {

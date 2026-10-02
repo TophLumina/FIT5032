@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import CommentSection from '@/components/CommentSection.vue'
 import PhotoCredit from '@/components/PhotoCredit.vue'
+import { getPlants } from '@/services/plants'
 
 const route = useRoute()
 const plant = ref(null)
@@ -86,11 +87,7 @@ async function loadPlant() {
   plant.value = null
 
   try {
-    const response = await fetch(`${import.meta.env.BASE_URL}data/plants.json`)
-    if (!response.ok) throw new Error(`Plant data request failed with status ${response.status}.`)
-
-    const data = await response.json()
-    if (!Array.isArray(data)) throw new TypeError('Plant data must be an array.')
+    const data = await getPlants()
 
     const match = data.find((item) => item.slug === route.params.slug)
     if (!match) throw new Error('This plant could not be found in the plant data.')
