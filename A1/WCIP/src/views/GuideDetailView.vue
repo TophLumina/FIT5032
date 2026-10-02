@@ -2,6 +2,7 @@
 import { RouterLink } from 'vue-router'
 import CommentSection from '@/components/CommentSection.vue'
 import PhotoCredit from '@/components/PhotoCredit.vue'
+import ResponsiveImage from '@/components/ResponsiveImage.vue'
 
 const guidePhoto = {
   src: '/images/pages/pollinator-pot.jpg',
@@ -69,10 +70,13 @@ function printPage() {
           <div class="card-body p-4">
             <p class="small fw-bold text-success text-uppercase">Guide hero</p>
             <div class="ratio ratio-4x3 overflow-hidden rounded">
-              <img
+              <ResponsiveImage
                 :src="guidePhoto.src"
                 :alt="guidePhoto.alt"
+                sizes="(min-width: 1400px) 476px, (min-width: 992px) calc(41.667vw - 74px), calc(100vw - 74px)"
                 class="h-100 w-100 object-fit-cover"
+                loading="eager"
+                fetchpriority="high"
               />
             </div>
             <PhotoCredit :credit="guidePhoto.credit" />

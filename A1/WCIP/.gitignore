@@ -37,3 +37,7 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Responsive photo variants are regenerated before dev/build.
+/public/images/generated/
+/src/generated/responsive-images.json

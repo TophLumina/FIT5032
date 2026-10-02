@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import CommentSection from '@/components/CommentSection.vue'
 import PhotoCredit from '@/components/PhotoCredit.vue'
+import ResponsiveImage from '@/components/ResponsiveImage.vue'
 import { getPlants } from '@/services/plants'
 
 const route = useRoute()
@@ -147,10 +148,13 @@ function joinLabels(values) {
             <div class="card-body p-4">
               <p class="small fw-bold text-success text-uppercase">Plant gallery</p>
               <div class="ratio ratio-4x3 overflow-hidden rounded">
-                <img
+                <ResponsiveImage
                   :src="plant.image"
                   :alt="plant.imageAlt"
+                  sizes="(min-width: 1400px) 476px, (min-width: 992px) calc(41.667vw - 74px), calc(100vw - 74px)"
                   class="h-100 w-100 object-fit-cover"
+                  loading="eager"
+                  fetchpriority="high"
                 />
               </div>
               <PhotoCredit :credit="plant.imageCredit" />

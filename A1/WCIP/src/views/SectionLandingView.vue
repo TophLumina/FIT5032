@@ -1,6 +1,7 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import PhotoCredit from '@/components/PhotoCredit.vue'
+import ResponsiveImage from '@/components/ResponsiveImage.vue'
 
 defineProps({
   eyebrow: { type: String, required: true },
@@ -34,9 +35,10 @@ defineProps({
         <div class="row g-4 align-items-center">
           <div class="col-lg-5">
             <div class="ratio ratio-4x3 overflow-hidden rounded">
-              <img
+              <ResponsiveImage
                 :src="image.src"
                 :alt="image.alt"
+                sizes="(min-width: 1400px) 506px, (min-width: 992px) calc(41.667vw - 45px), calc(100vw - 74px)"
                 class="h-100 w-100 object-fit-cover"
                 loading="lazy"
               />

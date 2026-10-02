@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "images:generate": "node scripts/generate-images.mjs",
+    "predev": "npm run images:generate",
     "dev": "vite",
+    "prebuild": "npm run images:generate",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "run-s \"lint:*\"",
@@ -30,6 +33,7 @@
     "npm-run-all2": "^9.0.2",
     "oxlint": "~1.80.0",
     "prettier": "3.9.5",
+    "sharp": "^0.35.5",
     "vite": "^8.1.5",
     "vite-plugin-vue-devtools": "^8.1.5",
     "vue-eslint-parser": "^10.4.1"

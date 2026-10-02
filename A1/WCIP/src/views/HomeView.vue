@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import PhotoCredit from '@/components/PhotoCredit.vue'
+import ResponsiveImage from '@/components/ResponsiveImage.vue'
 import { getPlants } from '@/services/plants'
 
 const router = useRouter()
@@ -136,9 +137,10 @@ function formatLabel(value) {
                 <article class="card card-hover h-100">
                   <div class="card-body">
                     <div class="ratio ratio-4x3 overflow-hidden rounded">
-                      <img
+                      <ResponsiveImage
                         :src="plant.image"
                         :alt="plant.imageAlt"
+                        sizes="(min-width: 1400px) 224px, (min-width: 992px) calc(22.223vw - 70px), (min-width: 768px) calc(33.334vw - 70px), calc(100vw - 108px)"
                         class="h-100 w-100 object-fit-cover"
                         loading="lazy"
                       />
