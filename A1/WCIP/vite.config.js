@@ -3,17 +3,18 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
+import firebaseConfig from './firebase.json' with { type: 'json' }
+
+const hostingHeaders = Object.fromEntries(
+  firebaseConfig.hosting.headers
+    .find((entry) => entry.regex === '.*')
+    .headers.map(({ key, value }) => [key, value]),
+)
 
 // https://vite.dev/config/
 export default defineConfig({
   preview: {
-    headers: {
-      'Content-Security-Policy':
-        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.firebaseapp.com; frame-src https://*.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
-      'X-Content-Type-Options': 'nosniff',
-      'Referrer-Policy': 'strict-origin-when-cross-origin',
-      'X-Frame-Options': 'DENY',
-    },
+    headers: hostingHeaders,
   },
   plugins: [vue(), vueDevTools()],
   resolve: {

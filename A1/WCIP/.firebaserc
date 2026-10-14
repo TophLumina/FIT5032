@@ -1,5 +1,12 @@
 {
   "projects": {
     "default": "fit5032-e0aef"
+  },
+  "targets": {
+    "fit5032-e0aef": {
+      "hosting": {
+        "wcip": ["wcip-fit5032-e0aef"]
+      }
+    }
   }
 }

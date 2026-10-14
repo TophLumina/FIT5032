@@ -10,6 +10,11 @@
     "prebuild": "npm run images:generate",
     "build": "vite build",
     "preview": "vite preview",
+    "hosting:serve": "npm run build && firebase emulators:start --only hosting --project fit5032-e0aef",
+    "deploy:hosting": "firebase deploy --only hosting:wcip --project fit5032-e0aef",
+    "functions:check": "npm --prefix functions run check",
+    "functions:serve": "firebase emulators:start --only functions --project demo-wcip",
+    "deploy:functions": "firebase deploy --only functions:wcip --project fit5032-e0aef",
     "lint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/"
   },
