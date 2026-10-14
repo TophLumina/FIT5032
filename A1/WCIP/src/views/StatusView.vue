@@ -1,36 +1,29 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
+import InteractiveTable from '@/components/InteractiveTable.vue'
 import { isAdmin } from '@/services/auth'
 import { getSiteStatus } from '@/services/status'
 import { siteDay, siteTimezone } from '@/utils/siteDate'
 
 const selectedDay = ref(siteDay())
-const search = ref('')
-const sortOrder = ref('most')
 const status = ref(null)
 const loading = ref(false)
 const error = ref('')
 const updatedAt = ref(null)
 let requestId = 0
 
-const users = computed(() => {
-  const term = search.value.trim().toLowerCase()
-  return (status.value?.users ?? [])
-    .filter((user) => user.email.toLowerCase().includes(term))
-    .sort(
-      (a, b) =>
-        (sortOrder.value === 'most'
-          ? b.commentCount - a.commentCount
-          : a.commentCount - b.commentCount) ||
-        a.email.localeCompare(b.email) ||
-        a.uid.localeCompare(b.uid),
-    )
-})
+const userColumns = [
+  { key: 'email', label: 'Email' },
+  { key: 'displayName', label: 'Display name' },
+  { key: 'commentCount', label: 'Comments' },
+]
 
 async function refresh() {
   const id = ++requestId
   status.value = null
   error.value = ''
+  loading.value = false
+  updatedAt.value = null
   if (!isAdmin.value) return
   loading.value = true
   try {
@@ -122,57 +115,15 @@ function formatTime(value) {
           <p class="text-body-secondary">
             {{ status.users.length }} users · {{ status.commentCount }} current comments
           </p>
-          <div class="row g-3 mb-4">
-            <div class="col-md-8">
-              <label for="status-email" class="form-label">Search by user email</label>
-              <input
-                id="status-email"
-                v-model="search"
-                class="form-control"
-                type="search"
-                placeholder="Enter an email or part of one"
-                autocomplete="off"
-              />
-            </div>
-            <div class="col-md-4">
-              <label for="status-sort" class="form-label">Sort by comment count</label>
-              <select id="status-sort" v-model="sortOrder" class="form-select">
-                <option value="most">Most comments first</option>
-                <option value="fewest">Fewest comments first</option>
-              </select>
-            </div>
-          </div>
-          <p class="small text-body-secondary" role="status">{{ users.length }} users shown</p>
-          <div class="table-responsive">
-            <table class="table table-hover align-middle">
-              <caption class="visually-hidden">
-                Registered users and their current comment counts, including users with no comments.
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Email</th>
-                  <th scope="col">Display name</th>
-                  <th
-                    scope="col"
-                    class="text-end"
-                    :aria-sort="sortOrder === 'most' ? 'descending' : 'ascending'"
-                  >
-                    Comments
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="user in users" :key="user.uid">
-                  <td class="text-break">{{ user.email || 'No email' }}</td>
-                  <td>{{ user.displayName }}</td>
-                  <td class="text-end">{{ user.commentCount }}</td>
-                </tr>
-                <tr v-if="users.length === 0">
-                  <td colspan="3" class="text-body-secondary py-4">No users match this email.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <InteractiveTable
+            id="admin-users"
+            caption="Registered users and their comment counts"
+            :rows="status.users"
+            :columns="userColumns"
+            row-key="uid"
+            initial-sort="commentCount"
+            initial-direction="desc"
+          />
           <p v-if="updatedAt" class="small text-body-secondary mb-0">
             Updated {{ formatTime(updatedAt) }}. Refresh to load the latest figures.
           </p>

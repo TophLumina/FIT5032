@@ -2,55 +2,35 @@
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import PlantCard from '@/components/PlantCard.vue'
+import InteractiveTable from '@/components/InteractiveTable.vue'
 import { usePlants } from '@/composables/usePlants'
 import { formatLabel } from '@/utils/plantLabels'
+import { plantColumns, plantFilters, queryPlants } from '../../shared/plantQuery.js'
+import { plantingListCsv } from '../../shared/plantCsv.js'
+import { downloadCsv } from '@/utils/download'
 
 const route = useRoute()
 const router = useRouter()
 const { plants, loading, error: loadError, loadPlants } = usePlants()
 const pageSize = 9
+const view = ref('cards')
+const tableRows = ref([])
+const exportMessage = ref('')
+const exportRows = computed(() => (view.value === 'table' ? tableRows.value : sortedPlants.value))
 
-const filterGroups = [
-  {
-    key: 'space',
-    field: 'spaces',
-    name: 'Space',
-    values: [
-      { value: 'balcony', label: 'Balcony' },
-      { value: 'courtyard', label: 'Courtyard' },
-      { value: 'school', label: 'School garden' },
-    ],
-  },
-  {
-    key: 'sunlight',
-    field: 'sunlight',
-    name: 'Sunlight',
-    values: [
-      { value: 'full-sun', label: 'Full sun' },
-      { value: 'part-shade', label: 'Part shade' },
-      { value: 'shade', label: 'Shade' },
-    ],
-  },
-  {
-    key: 'experience',
-    field: 'difficulty',
-    name: 'Difficulty',
-    values: [
-      { value: 'beginner', label: 'Beginner' },
-      { value: 'intermediate', label: 'Intermediate' },
-    ],
-  },
-  {
-    key: 'benefit',
-    field: 'biodiversity',
-    name: 'Biodiversity benefit',
-    values: [
-      { value: 'bees', label: 'Bees' },
-      { value: 'birds', label: 'Birds' },
-      { value: 'butterflies', label: 'Butterflies' },
-    ],
-  },
-]
+function exportPlantingList() {
+  if (!exportRows.value.length) return
+  downloadCsv(plantingListCsv(exportRows.value), 'wcip-planting-list.csv')
+  exportMessage.value = `Downloaded ${exportRows.value.length} plants in your current result order.`
+}
+
+const filterGroups = plantFilters.map((group) => ({
+  ...group,
+  values: group.values.map((value) => ({
+    value,
+    label: value === 'school' ? 'School garden' : formatLabel(value),
+  })),
+}))
 
 const valueLabels = Object.fromEntries(
   filterGroups.flatMap((group) => group.values.map((option) => [option.value, option.label])),
@@ -88,31 +68,9 @@ watch(
   { immediate: true },
 )
 
-const sortedPlants = computed(() => {
-  const term = applied.value.q.toLowerCase()
-  const results = plants.value.filter((plant) => {
-    const text = [
-      plant.commonName,
-      plant.scientificName,
-      plant.status,
-      ...filterGroups.flatMap(({ field }) => plant[field]),
-    ]
-      .join(' ')
-      .toLowerCase()
-    return (
-      (!term || text.includes(term)) &&
-      filterGroups.every(
-        ({ key, field }) =>
-          !applied.value[key].length ||
-          applied.value[key].some((value) => [plant[field]].flat().includes(value)),
-      )
-    )
-  })
-  if (applied.value.sort === 'name-asc')
-    return results.sort((a, b) => a.commonName.localeCompare(b.commonName))
-  if (applied.value.sort === 'name-desc')
-    return results.sort((a, b) => b.commonName.localeCompare(a.commonName))
-  return results.sort((a, b) => Number(b.featured) - Number(a.featured))
+const sortedPlants = computed(() => queryPlants(plants.value, applied.value))
+watch(exportRows, () => {
+  exportMessage.value = ''
 })
 
 const pageCount = computed(() => Math.max(1, Math.ceil(sortedPlants.value.length / pageSize)))
@@ -165,6 +123,8 @@ function goToPage(page) {
 
 function reset() {
   draft.value = readChoices()
+  view.value = 'cards'
+  exportMessage.value = ''
   router.push({ name: 'plants' })
 }
 </script>
@@ -187,13 +147,14 @@ function reset() {
 
     <form class="row g-2 mb-4" role="search" @submit.prevent="applyFilters">
       <div class="col-lg">
-        <label class="visually-hidden" for="plant-search">Search by plant name</label>
+        <label class="visually-hidden" for="plant-search">Search all plant columns</label>
         <input
           id="plant-search"
           v-model="draft.q"
           class="form-control form-control-lg"
           type="search"
-          placeholder="Search by common or scientific name…"
+          maxlength="100"
+          placeholder="Search plant names or growing conditions…"
         />
       </div>
       <div class="col-md-4 col-lg-3">
@@ -240,7 +201,7 @@ function reset() {
         </div>
       </aside>
 
-      <section class="col-lg-9" aria-labelledby="results-title" aria-live="polite">
+      <section class="col-lg-9" aria-labelledby="results-title">
         <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2 mb-3">
           <h2 id="results-title" class="h4 mb-0">
             {{ sortedPlants.length }}
@@ -268,58 +229,114 @@ function reset() {
         </div>
 
         <template v-else>
-          <p class="small text-body-secondary" role="status">
-            Showing {{ firstResult + 1 }}–{{ firstResult + paginatedPlants.length }} of
-            {{ sortedPlants.length }} plants · Page {{ currentPage }} of {{ pageCount }}
-          </p>
-          <div class="row g-3">
-            <div v-for="plant in paginatedPlants" :key="plant.id" class="col-md-6 col-xl-4">
-              <PlantCard
-                :plant="plant"
-                sizes="(min-width: 1400px) 278px, (min-width: 1200px) calc(25vw - 53px), (min-width: 992px) calc(37.5vw - 54px), (min-width: 768px) calc(50vw - 54px), calc(100vw - 58px)"
-              />
-            </div>
-          </div>
-          <nav v-if="pageCount > 1" class="mt-4" aria-label="Plant results pages">
-            <ul class="pagination flex-wrap justify-content-center mb-0">
-              <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                <button
-                  class="page-link"
-                  type="button"
-                  :disabled="currentPage === 1"
-                  @click="goToPage(currentPage - 1)"
-                >
-                  Previous
-                </button>
-              </li>
-              <li
-                v-for="number in pageCount"
-                :key="number"
-                class="page-item"
-                :class="{ active: number === currentPage }"
+          <div class="d-flex flex-wrap justify-content-between gap-3 mb-3">
+            <div class="btn-group" role="group" aria-label="Plant results view">
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                :class="{ active: view === 'cards' }"
+                :aria-pressed="view === 'cards'"
+                @click="view = 'cards'"
               >
-                <button
-                  class="page-link"
-                  type="button"
-                  :aria-label="`Page ${number}`"
-                  :aria-current="number === currentPage ? 'page' : undefined"
-                  @click="goToPage(number)"
+                Cards
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                :class="{ active: view === 'table' }"
+                :aria-pressed="view === 'table'"
+                @click="view = 'table'"
+              >
+                Compare plants
+              </button>
+            </div>
+            <button
+              type="button"
+              class="btn btn-primary"
+              :disabled="!exportRows.length"
+              @click="exportPlantingList"
+            >
+              Download planting list (CSV)
+            </button>
+          </div>
+          <p class="small text-body-secondary">
+            Your planting list includes all matching plants, across every page, in the current
+            order.
+          </p>
+          <p v-if="exportMessage" class="small" role="status">{{ exportMessage }}</p>
+          <InteractiveTable
+            v-if="view === 'table'"
+            id="plant-comparison"
+            caption="Plant comparison"
+            :rows="sortedPlants"
+            :columns="plantColumns"
+            :show-search="false"
+            :initial-sort="applied.sort === 'best' ? '' : 'commonName'"
+            :initial-direction="applied.sort === 'name-desc' ? 'desc' : 'asc'"
+            @change="tableRows = $event"
+          >
+            <template #cell-commonName="{ row }">
+              <RouterLink
+                class="text-primary"
+                :to="{ name: 'plant-detail', params: { slug: row.slug } }"
+                >{{ row.commonName }}</RouterLink
+              >
+            </template>
+          </InteractiveTable>
+          <template v-else>
+            <p class="small text-body-secondary" role="status">
+              Showing {{ firstResult + 1 }}–{{ firstResult + paginatedPlants.length }} of
+              {{ sortedPlants.length }} plants · Page {{ currentPage }} of {{ pageCount }}
+            </p>
+            <div class="row g-3">
+              <div v-for="plant in paginatedPlants" :key="plant.id" class="col-md-6 col-xl-4">
+                <PlantCard
+                  :plant="plant"
+                  sizes="(min-width: 1400px) 278px, (min-width: 1200px) calc(25vw - 53px), (min-width: 992px) calc(37.5vw - 54px), (min-width: 768px) calc(50vw - 54px), calc(100vw - 58px)"
+                />
+              </div>
+            </div>
+            <nav v-if="pageCount > 1" class="mt-4" aria-label="Plant results pages">
+              <ul class="pagination flex-wrap justify-content-center mb-0">
+                <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                  <button
+                    class="page-link"
+                    type="button"
+                    :disabled="currentPage === 1"
+                    @click="goToPage(currentPage - 1)"
+                  >
+                    Previous
+                  </button>
+                </li>
+                <li
+                  v-for="number in pageCount"
+                  :key="number"
+                  class="page-item"
+                  :class="{ active: number === currentPage }"
                 >
-                  {{ number }}
-                </button>
-              </li>
-              <li class="page-item" :class="{ disabled: currentPage === pageCount }">
-                <button
-                  class="page-link"
-                  type="button"
-                  :disabled="currentPage === pageCount"
-                  @click="goToPage(currentPage + 1)"
-                >
-                  Next
-                </button>
-              </li>
-            </ul>
-          </nav>
+                  <button
+                    class="page-link"
+                    type="button"
+                    :aria-label="`Page ${number}`"
+                    :aria-current="number === currentPage ? 'page' : undefined"
+                    @click="goToPage(number)"
+                  >
+                    {{ number }}
+                  </button>
+                </li>
+                <li class="page-item" :class="{ disabled: currentPage === pageCount }">
+                  <button
+                    class="page-link"
+                    type="button"
+                    :disabled="currentPage === pageCount"
+                    @click="goToPage(currentPage + 1)"
+                  >
+                    Next
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </template>
         </template>
       </section>
     </div>

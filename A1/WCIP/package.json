@@ -16,7 +16,11 @@
     "functions:serve": "firebase emulators:start --only functions --project demo-wcip",
     "deploy:functions": "firebase deploy --only functions:wcip --project fit5032-e0aef",
     "lint": "eslint . --fix --cache",
-    "format": "prettier --write --experimental-cli src/"
+    "format": "prettier --write --experimental-cli src/",
+    "test": "vitest run",
+    "api:dev": "wrangler dev --ip 127.0.0.1",
+    "api:check": "wrangler deploy --dry-run",
+    "deploy:api": "wrangler deploy"
   },
   "dependencies": {
     "bootstrap": "^5.3.8",
@@ -28,16 +32,20 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@vitejs/plugin-vue": "^6.0.8",
+    "@vue/test-utils": "^2.5.1",
     "eslint": "^10.7.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-vue": "~10.9.2",
     "firebase-tools": "^15.30.0",
     "globals": "^17.7.0",
+    "jsdom": "^29.1.1",
     "prettier": "3.9.5",
     "sharp": "^0.35.5",
     "vite": "^8.1.5",
     "vite-plugin-vue-devtools": "^8.1.5",
-    "vue-eslint-parser": "^10.4.1"
+    "vitest": "^4.1.11",
+    "vue-eslint-parser": "^10.4.1",
+    "wrangler": "^4.151.0"
   },
   "engines": {
     "node": "^22.18.0 || >=24.12.0"

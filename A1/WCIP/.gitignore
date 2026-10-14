@@ -37,3 +37,6 @@ coverage
 # Responsive photo variants are regenerated before dev/build.
 /public/images/generated/
 /src/generated/responsive-images.json
+
+# Cloudflare local runtime and deployment state
+.wrangler/

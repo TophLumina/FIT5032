@@ -10,6 +10,7 @@ import { RouterLink } from 'vue-router'
         <RouterLink :to="{ name: 'plants' }">Plants</RouterLink>
         <RouterLink :to="{ name: 'guides' }">Guides</RouterLink>
         <RouterLink :to="{ name: 'about' }">About</RouterLink>
+        <RouterLink :to="{ name: 'plant-api' }">Plant API</RouterLink>
       </nav>
     </div>
   </footer>
