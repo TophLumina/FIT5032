@@ -27,7 +27,7 @@ const route = useRoute()
           v-if="isAdmin"
           class="btn btn-outline-primary me-2 mb-2"
           :to="{ name: 'status' }"
-          >Site status</RouterLink
+          >Admin dashboard</RouterLink
         >
         <RouterLink class="btn btn-primary" :to="{ name: 'plants' }">Find a plant</RouterLink>
       </div>

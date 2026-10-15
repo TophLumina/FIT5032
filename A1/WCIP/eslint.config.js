@@ -27,7 +27,7 @@ export default defineConfig([
     rules: { 'vue/no-v-html': 'error' },
   },
   {
-    files: ['*.config.js'],
+    files: ['*.config.js', 'scripts/*.mjs', 'tests/*.mjs'],
     languageOptions: { globals: globals.node },
   },
 

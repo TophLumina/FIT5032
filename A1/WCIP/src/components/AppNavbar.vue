@@ -116,7 +116,7 @@ function submitSearch() {
             <template v-if="user">
               <span v-if="isAdmin" class="badge text-bg-warning">admin</span>
               <RouterLink v-if="isAdmin" class="btn btn-outline-primary" :to="{ name: 'status' }"
-                >Status</RouterLink
+                >Dashboard</RouterLink
               >
               <RouterLink class="btn btn-outline-primary" :to="{ name: 'account' }"
                 >My account</RouterLink

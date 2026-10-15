@@ -18,6 +18,9 @@
     "lint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/",
     "test": "vitest run",
+    "test:rules": "firebase emulators:exec --config firebase.emulators.json --only firestore --project demo-wcip \"node --test tests/firestore.rules.mjs\"",
+    "dev:emulators": "firebase emulators:start --config firebase.emulators.json --only auth,firestore --project demo-wcip",
+    "seed:emulators": "node scripts/seed-dashboard-emulator.mjs",
     "api:dev": "wrangler dev --ip 127.0.0.1",
     "api:check": "wrangler deploy --dry-run",
     "deploy:api": "wrangler deploy"
@@ -32,6 +35,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue/test-utils": "^2.5.1",
     "eslint": "^10.7.0",

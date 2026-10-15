@@ -15,10 +15,11 @@ const routes = [
     meta: { title: 'Plant API' },
   },
   {
-    path: '/status',
+    path: '/admin',
+    alias: '/status',
     name: 'status',
-    component: () => import('@/views/StatusView.vue'),
-    meta: { title: 'Site status', requiresAuth: true, requiresAdmin: true },
+    component: () => import('@/views/AdminDashboardView.vue'),
+    meta: { title: 'Admin dashboard', requiresAuth: true, requiresAdmin: true },
   },
   {
     path: '/login',

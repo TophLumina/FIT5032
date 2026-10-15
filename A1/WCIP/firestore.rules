@@ -52,7 +52,9 @@ service cloud.firestore {
     match /admins/{uid} {
       allow get: if signedIn() && request.auth.uid == uid;
       // Provision roles through Firebase Console / trusted server credentials only.
-      allow list, write: if false;
+      // The dashboard joins role membership to the restricted user directory.
+      allow list: if admin();
+      allow write: if false;
     }
 
     match /guides/{slug} {

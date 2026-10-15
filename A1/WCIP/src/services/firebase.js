@@ -4,8 +4,9 @@ import {
   browserSessionPersistence,
   indexedDBLocalPersistence,
   initializeAuth,
+  connectAuthEmulator,
 } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
 
 // Public web configuration, identical to Week67/firebase_app/src/main.js.
 const config = {
@@ -17,9 +18,26 @@ const config = {
   appId: '1:162413777778:web:88f2966dd6d5f8dce943eb',
 }
 
-const app = getApps().length ? getApp() : initializeApp(config)
+// Production builds always use the live project.
+const localEmulators = import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === 'true'
+const app = getApps().length
+  ? getApp()
+  : initializeApp(
+      localEmulators
+        ? {
+            ...config,
+            projectId: 'demo-wcip',
+            apiKey: 'demo-key',
+            authDomain: 'demo-wcip.firebaseapp.com',
+          }
+        : config,
+    )
 // Email/password auth needs no popup resolver or third-party sign-in scripts.
 export const auth = initializeAuth(app, {
   persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence],
 })
 export const db = getFirestore(app)
+if (localEmulators) {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099')
+  connectFirestoreEmulator(db, '127.0.0.1', 8080)
+}
