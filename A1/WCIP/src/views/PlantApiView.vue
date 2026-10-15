@@ -47,7 +47,7 @@ async function tryQuery() {
       <h1 class="display-5 fw-bold">Plant Query API</h1>
       <p class="lead">Bring WCIP's Melbourne gardening catalogue into your own application.</p>
       <p>
-        Two public, read-only REST routes provide the same plant data and query rules used by our
+        Public, read-only REST routes provide the same plant data and query rules used by our
         <RouterLink :to="{ name: 'plants' }">Plant Finder</RouterLink>. No account or API key is
         required.
       </p>
@@ -224,6 +224,42 @@ async function tryQuery() {
           ><code>{{ JSON.stringify(result, null, 2) }}</code></pre>
         </template>
       </div>
+    </section>
+
+    <section class="mb-5" aria-labelledby="map-api-heading">
+      <h2 id="map-api-heading" class="h3">Melbourne observation APIs</h2>
+      <p>
+        The <RouterLink :to="{ name: 'plant-map' }">Plant Map</RouterLink> uses two additional
+        public routes:
+      </p>
+      <ul>
+        <li>
+          <code>GET /api/v1/map/places?q=Fitzroy</code> — search place names in Melbourne and
+          surrounds through Open-Meteo / GeoNames; 2–80 characters, up to 10 results, cached for one
+          day.
+        </li>
+        <li>
+          <code
+            >GET /api/v1/map/occurrences?plant=native-violet&amp;yearFrom=2020&amp;yearTo=2025</code
+          >
+          — real GBIF records for a catalogue plant, cached for 15 minutes.
+        </li>
+      </ul>
+      <p>
+        Observation queries accept <code>bbox=west,south,east,north</code> within
+        <code>144.3,-38.5,145.8,-37.3</code>. The default rectangle is
+        <code>144.75,-38,145.35,-37.55</code>. Years run from 1800 to the current year; defaults are
+        2000 to the current year. Invalid or repeated parameters return 400. An unresolved plant
+        taxon returns 422; unavailable data providers return 503.
+      </p>
+      <p>
+        At most 300 records are returned. <code>meta.total</code> is the GBIF match count;
+        <code>returned</code>, <code>truncated</code> and <code>excluded</code> describe the loaded
+        subset. Records include coordinates, dates, datasets, licences, uncertainty and links to the
+        original sources. A limited, non-random subset must not be presented as a complete
+        distribution or population count. Retain GBIF/dataset and Open-Meteo/GeoNames attribution.
+        Full schemas are in the OpenAPI specification.
+      </p>
     </section>
 
     <section aria-labelledby="usage-heading">

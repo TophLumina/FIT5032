@@ -2,6 +2,7 @@ import plants from '../public/data/plants.json'
 import { paginatePlants, parsePlantQuery, QueryError } from '../shared/plantQuery.js'
 import { siteOrigin } from '../shared/plantCsv.js'
 import { openApiDocument } from './openapi.js'
+import { findOccurrences, findPlaces, MapServiceError } from './map.js'
 
 const headers = {
   'Content-Type': 'application/json; charset=utf-8',
@@ -68,6 +69,14 @@ export default {
       })
     const url = new URL(request.url)
     try {
+      if (url.pathname === '/api/v1/map/places')
+        return response(await findPlaces(url.searchParams), 200, {
+          'Cache-Control': 'public, max-age=86400',
+        })
+      if (url.pathname === '/api/v1/map/occurrences')
+        return response(await findOccurrences(url.searchParams, plants), 200, {
+          'Cache-Control': 'public, max-age=900',
+        })
       if (url.pathname === '/api/v1/openapi.json') return response(openApiDocument(url.origin))
       if (url.pathname === '/api/v1/plants') {
         const choices = parsePlantQuery(url.searchParams)
@@ -84,6 +93,8 @@ export default {
       }
       return error(404, 'NOT_FOUND', 'Unknown route. See /api/v1/openapi.json.')
     } catch (cause) {
+      if (cause instanceof MapServiceError)
+        return error(cause.status, 'MAP_DATA_UNAVAILABLE', cause.message)
       if (cause instanceof QueryError) return error(400, 'INVALID_QUERY', cause.message)
       return error(500, 'INTERNAL_ERROR', 'The request could not be processed.')
     }

@@ -1,4 +1,5 @@
 import { plantColumns, plantFilters, plantSorts } from '../shared/plantQuery.js'
+import { mapApiPaths } from './mapOpenapi.js'
 
 const string = { type: 'string' }
 const strings = { type: 'array', items: string }
@@ -78,12 +79,13 @@ export function openApiDocument(origin) {
     openapi: '3.0.3',
     info: {
       title: 'WCIP Plant Query API',
-      version: '1.0.0',
+      version: '1.1.0',
       description:
-        'Read-only access to the curated WCIP Melbourne gardening catalogue. No API key. Public CORS without credentials. This is not plant occurrence or live stock data. Image credits describe image rights, not botanical evidence. Responses are cached for five minutes. Queries are limited to 2048 encoded characters; unknown parameters and duplicates of scalar parameters return 400. Empty or beyond-last pages return 200 with an empty data array. Cloudflare account quotas apply; there is no availability SLA. Site and API use the same catalogue and query module.',
+        'Read-only access to the curated WCIP Melbourne gardening catalogue. No API key. Public CORS without credentials. Catalogue routes provide curated gardening information; the separate map routes query GBIF occurrence records. Neither is live nursery stock data. Image credits describe image rights, not botanical evidence. Catalogue responses are cached for five minutes; map route cache lifetimes are documented separately. Queries are limited to 2048 encoded characters; unknown parameters and duplicates of scalar parameters return 400. Empty or beyond-last pages return 200 with an empty data array. Cloudflare account quotas apply; there is no availability SLA. Site and API use the same catalogue and query module.',
     },
     servers: [{ url: origin }],
     paths: {
+      ...mapApiPaths,
       '/api/v1/plants': {
         get: {
           summary: 'Search, filter, sort and paginate plants',

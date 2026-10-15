@@ -136,7 +136,7 @@ describe('public plant API', () => {
   it('publishes a discoverable OpenAPI contract', async () => {
     const spec = await (await request('/api/v1/openapi.json')).json()
     expect(spec.openapi).toBe('3.0.3')
-    expect(Object.keys(spec.paths)).toHaveLength(2)
+    expect(Object.keys(spec.paths)).toHaveLength(4)
     expect(spec.servers[0].url).toBe('https://example.test')
     expect(spec.components.schemas.Plant.properties.imageCredit).toBeDefined()
   })

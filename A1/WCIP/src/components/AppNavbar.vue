@@ -35,6 +35,7 @@ watch(user, (value) => {
 
 const navItems = [
   { label: 'Plants', to: { name: 'plants' }, section: '/plants' },
+  { label: 'Plant Map', to: { name: 'plant-map' }, section: '/map' },
   { label: 'Guides', to: { name: 'guides' }, section: '/guides' },
   { label: 'About', to: { name: 'about' }, section: '/about' },
 ]
@@ -78,11 +79,15 @@ function submitSearch() {
           <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div id="primary-navigation" class="collapse navbar-collapse" :class="{ show: mobileOpen }">
+        <div
+          id="primary-navigation"
+          class="collapse navbar-collapse flex-xl-wrap gap-xl-2"
+          :class="{ show: mobileOpen }"
+        >
           <ul class="navbar-nav ms-auto align-items-xl-center gap-xl-1">
             <li v-for="item in navItems" :key="item.label" class="nav-item">
               <RouterLink
-                class="nav-link px-xl-2"
+                class="nav-link px-xl-2 text-nowrap"
                 :class="{ active: route.path.startsWith(item.section) }"
                 :aria-current="route.path.startsWith(item.section) ? 'page' : undefined"
                 :to="item.to"

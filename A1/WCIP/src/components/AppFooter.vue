@@ -8,6 +8,7 @@ import { RouterLink } from 'vue-router'
       <p class="mb-0"><strong>WHAT CAN I PLANT?</strong> · Melbourne urban gardening</p>
       <nav class="d-flex flex-wrap gap-3" aria-label="Footer navigation">
         <RouterLink :to="{ name: 'plants' }">Plants</RouterLink>
+        <RouterLink :to="{ name: 'plant-map' }">Plant Map</RouterLink>
         <RouterLink :to="{ name: 'guides' }">Guides</RouterLink>
         <RouterLink :to="{ name: 'about' }">About</RouterLink>
         <RouterLink :to="{ name: 'plant-api' }">Plant API</RouterLink>

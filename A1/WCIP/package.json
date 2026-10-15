@@ -26,6 +26,7 @@
     "bootstrap": "^5.3.8",
     "bootswatch": "^5.3.8",
     "firebase": "^12.19.0",
+    "leaflet": "^1.9.4",
     "vue": "rc",
     "vue-router": "^5.2.0"
   },

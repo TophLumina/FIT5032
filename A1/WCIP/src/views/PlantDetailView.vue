@@ -170,7 +170,14 @@ watch(
                   </div>
                 </div>
               </div>
-              <a class="btn btn-primary ms-auto" href="#sources">Where to find it →</a>
+              <div class="d-flex flex-wrap gap-2 mt-auto">
+                <RouterLink
+                  class="btn btn-primary"
+                  :to="{ name: 'plant-map', query: { plant: plant.slug } }"
+                  >Explore observation map</RouterLink
+                >
+                <a class="btn btn-outline-primary" href="#sources">Where to find it →</a>
+              </div>
             </div>
           </div>
         </section>

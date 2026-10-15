@@ -3,6 +3,12 @@ import { authInitialized, user, waitForAdminRole } from '@/services/auth'
 
 const routes = [
   {
+    path: '/map',
+    name: 'plant-map',
+    component: () => import('@/views/PlantMapView.vue'),
+    meta: { title: 'Melbourne Plant Map' },
+  },
+  {
     path: '/developers',
     name: 'plant-api',
     component: () => import('@/views/PlantApiView.vue'),
