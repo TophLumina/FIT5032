@@ -8,7 +8,7 @@
   },
   "scripts": {
     "precheck": "node ../scripts/prepare-functions.mjs",
-    "check": "node --check index.js && node --check identity.js && node --check backend.js && node --check reporting.js && node --check seasonalEmail.js && node --check seasonalGuide.js && node --check guidePdf.js && node --check sendgrid.js"
+    "check": "node --check index.js && node --check identity.js && node --check backend.js && node --check reporting.js && node --check seasonalEmail.js && node --check seasonalGuide.js && node --check guidePdf.js && node --check emailMessage.js && node --check gmail.js"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",

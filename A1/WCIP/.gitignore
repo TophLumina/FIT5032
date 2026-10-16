@@ -16,6 +16,8 @@ coverage
 .env
 .env.*
 .firebase/
+client_secret_*.json
+gmail-client.json
 
 # Editor directories and files
 .vscode/*

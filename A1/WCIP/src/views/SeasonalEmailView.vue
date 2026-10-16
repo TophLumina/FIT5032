@@ -17,12 +17,18 @@ const mustReload = ref(false)
 let generation = 0
 const labels = {
   ready: 'Not sent',
-  accepted: 'Accepted by SendGrid',
+  accepted: 'Accepted by Gmail',
+  blocked: 'Delivery blocked',
   rejected: 'Rejected',
   unknown: 'Needs review',
   processing: 'In progress',
   skipped: 'Skipped',
   limited: 'Daily limit reached',
+}
+function statusLabel(record) {
+  if (record.status === 'accepted' && record.provider === 'sendgrid')
+    return 'Previously accepted by SendGrid'
+  return labels[record.status] || record.status
 }
 const columns = [
   { key: 'select', label: 'Select', format: (value) => (value ? 'Selected' : 'Not selected') },
@@ -34,7 +40,7 @@ const rows = computed(() =>
   (preview.value?.recipients || []).map((recipient) => ({
     ...recipient,
     select: selected.value.includes(recipient.uid),
-    statusLabel: labels[recipient.status] || recipient.status,
+    statusLabel: statusLabel(recipient),
   })),
 )
 const selectedUsers = computed(() => rows.value.filter((row) => row.select))
@@ -163,7 +169,7 @@ onBeforeUnmount(() => generation++)
       <h2 id="mail-results-title" class="h4">Sending results</h2>
       <ul class="mb-0 result-list">
         <li v-for="result in results" :key="result.uid" class="mb-2 text-break">
-          <strong>{{ result.email }}: {{ labels[result.status] }}</strong
+          <strong>{{ result.email }}: {{ statusLabel(result) }}</strong
           ><br />{{ result.message }}
         </li>
       </ul>
@@ -227,8 +233,8 @@ onBeforeUnmount(() => generation++)
         </p>
         <p class="small text-body-secondary">
           One accepted email per account per month. Rejected requests can be retried after reloading
-          (up to three attempts). Uncertain results stay blocked for review in SendGrid Email
-          Activity. Site limit: {{ preview.dailyLimit }} attempts per Melbourne day.
+          (up to three attempts). Uncertain results stay locked until the sending mailbox is
+          checked. Site limit: {{ preview.dailyLimit }} attempts per Melbourne day.
         </p>
         <p v-if="!rows.length" role="status">
           No eligible subscribers yet. Users can opt in under My account.
@@ -299,8 +305,8 @@ onBeforeUnmount(() => generation++)
           are saved on the server.
         </p>
         <p class="small text-body-secondary mt-3 mb-0">
-          Accepted by SendGrid means the provider has queued the email. Check SendGrid Email
-          Activity for delivery or bounce information.
+          Accepted by Gmail means Gmail accepted the send request. Recipient delivery is not
+          confirmed here. Check the sending mailbox for any delivery failure notice.
         </p>
       </form>
     </template>

@@ -84,7 +84,7 @@ beforeEach(async () => {
   calls = []
   provider = async () => ({
     status: 'accepted',
-    message: 'Accepted by SendGrid; delivery is not yet confirmed.',
+    message: 'Accepted by Gmail; delivery is not yet confirmed.',
     providerId: 'mock-provider-id',
   })
   await db.doc(`admins/${admin.uid}`).set({ role: 'admin' })
@@ -163,13 +163,19 @@ test('parallel and repeated sends submit exactly one private email with a real P
   ])
   assert.equal(calls.length, 1)
   assert.ok(results.some((result) => result.results[0].status === 'accepted'))
-  assert.deepEqual(calls[0].personalizations, [{ to: [{ email: member.email }] }])
-  assert.deepEqual(calls[0].from, { email: sender.email, name: sender.name })
-  assert.match(calls[0].content[0].value, /To unsubscribe/)
-  const attachment = calls[0].attachments[0]
-  assert.equal(attachment.type, 'application/pdf')
-  assert.equal(attachment.disposition, 'attachment')
-  assert.match(Buffer.from(attachment.content, 'base64').subarray(0, 8).toString(), /^%PDF-1\./)
+  const mime = Buffer.from(calls[0].raw, 'base64url').toString()
+  assert.ok(mime.includes(`To: <${member.email}>\r\n`))
+  assert.ok(mime.includes(`<${sender.email}>\r\n`))
+  assert.equal(calls[0].senderEmail, sender.email)
+  assert.equal((mime.match(/^To:/gm) || []).length, 1)
+  assert.doesNotMatch(mime, /^(Cc|Bcc):/gim)
+  const body = mime.match(/Content-Type: text\/plain;[\s\S]*?\r\n\r\n([\s\S]*?)\r\n--/)[1]
+  assert.match(Buffer.from(body, 'base64').toString(), /To unsubscribe/)
+  const attachment = mime.match(
+    /Content-Type: application\/pdf;[\s\S]*?\r\n\r\n([\s\S]*?)\r\n--/,
+  )[1]
+  assert.match(mime, /Content-Disposition: attachment;/)
+  assert.match(Buffer.from(attachment, 'base64').subarray(0, 8).toString(), /^%PDF-1\./)
   assert.equal((await service.send(request([member.uid]))).results[0].status, 'accepted')
   assert.equal(calls.length, 1)
   assert.equal((await db.doc(`seasonalMailDays/${siteDay()}`).get()).data().attempts, 1)
@@ -234,6 +240,31 @@ test('daily and monthly attempt limits prevent further provider calls', async ()
   for (let i = 0; i < 4; i++) await service.send(request([member.uid]))
   assert.equal(calls.length, 3)
   assert.equal((await ref(member.uid).get()).data().attempts, 3)
+})
+
+test('provider migration preserves accepted locks and only confirmed failures can be retried', async () => {
+  await ref(member.uid).set({
+    status: 'accepted',
+    provider: 'sendgrid',
+    message: 'Legacy accepted',
+    attempts: 1,
+    requestId: 'legacy-request',
+    providerId: 'old-message',
+    startedAt: new Date(),
+  })
+  assert.equal((await service.send(request([member.uid]))).results[0].provider, 'sendgrid')
+  assert.equal(calls.length, 0)
+  await ref(member.uid).update({ status: 'blocked', message: 'Confirmed DMARC rejection' })
+  const preview = await service.preview({ auth: admin.claims, data: {} })
+  assert.equal(preview.recipients.find((row) => row.uid === member.uid).selectable, true)
+  const result = await service.send(request([member.uid]))
+  assert.equal(result.results[0].provider, 'gmail')
+  assert.equal(calls.length, 1)
+  const saved = (await ref(member.uid).get()).data()
+  assert.equal(saved.attempts, 2)
+  assert.equal(saved.history[0].provider, 'sendgrid')
+  assert.equal(saved.history[0].status, 'blocked')
+  assert.equal(saved.history[0].providerId, 'old-message')
 })
 
 test('revoked role and disabled administrator cannot preview or send', async () => {

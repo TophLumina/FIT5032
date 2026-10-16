@@ -91,7 +91,7 @@ describe('seasonal mail administrator flow', () => {
     await wrapper.get('#mail-subscribers-email').setValue('user12')
     expect(wrapper.findAll('tbody tr')).toHaveLength(1)
     expect(wrapper.get('tbody input').element.disabled).toBe(true)
-    expect(wrapper.get('tbody').text()).toContain('Accepted by SendGrid')
+    expect(wrapper.get('tbody').text()).toContain('Accepted by Gmail')
   })
   it('downloads the exact preview attachment without sending mail', async () => {
     const wrapper = render()
@@ -102,6 +102,30 @@ describe('seasonal mail administrator flow', () => {
     await button.trigger('click')
     expect(downloadGuide).toHaveBeenCalledWith(source.attachment)
     expect(sendSeasonalEmail).not.toHaveBeenCalled()
+  })
+  it('distinguishes historical SendGrid acceptance from Gmail and shows confirmed blocks', async () => {
+    const preview = structuredClone(source)
+    preview.recipients = [
+      { ...preview.recipients[12], provider: 'sendgrid' },
+      {
+        ...preview.recipients[0],
+        provider: 'sendgrid',
+        status: 'blocked',
+        message: 'DMARC check failed',
+        selectable: true,
+      },
+    ]
+    previewSeasonalEmail.mockResolvedValueOnce(preview)
+    const wrapper = render()
+    await flushPromises()
+    expect(wrapper.get('tbody').text()).toContain('Previously accepted by SendGrid')
+    expect(wrapper.get('tbody').text()).toContain('Delivery blocked')
+    expect(wrapper.get('input[aria-label="Send to user00@example.test"]').element.disabled).toBe(
+      false,
+    )
+    expect(wrapper.get('input[aria-label="Send to user12@example.test"]').element.disabled).toBe(
+      true,
+    )
   })
   it('requires reloading after an uncertain response instead of silently resending', async () => {
     sendSeasonalEmail.mockRejectedValueOnce(new Error('network disconnected'))

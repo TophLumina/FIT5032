@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { createSeasonalGuide } from '../functions/seasonalGuide.js'
-import { senderConfig, sendgridSend } from '../functions/sendgrid.js'
+import { senderConfig } from '../functions/emailMessage.js'
 import plants from '../public/data/plants.json'
 
 describe('seasonal guide and email provider', () => {
@@ -18,31 +18,10 @@ describe('seasonal guide and email provider', () => {
     expect(() => senderConfig({})).toThrow('not been configured')
     expect(() =>
       senderConfig({
-        SENDGRID_FROM_EMAIL: 'a@example.test',
-        SENDGRID_REPLY_TO_EMAIL: 'a@example.test',
-        SENDGRID_FROM_NAME: 'WCIP\r\nBCC: bad',
+        MAIL_FROM_EMAIL: 'a@example.test',
+        MAIL_REPLY_TO_EMAIL: 'a@example.test',
+        MAIL_FROM_NAME: 'WCIP\r\nBCC: bad',
       }),
     ).toThrow()
-  })
-  it('only treats HTTP 202 as accepted and never retries ambiguous provider results', async () => {
-    for (const [httpStatus, status] of [
-      [202, 'accepted'],
-      [401, 'rejected'],
-      [403, 'rejected'],
-      [429, 'rejected'],
-      [500, 'unknown'],
-      [200, 'unknown'],
-    ]) {
-      const fetcher = vi.fn().mockResolvedValue({
-        status: httpStatus,
-        headers: new Headers({ 'x-message-id': 'provider-test' }),
-      })
-      const result = await sendgridSend({ subject: 'test' }, 'test-key', fetcher)
-      expect(result.status).toBe(status)
-      expect(fetcher).toHaveBeenCalledTimes(1)
-    }
-    const fetcher = vi.fn().mockRejectedValue(new Error('network lost'))
-    expect((await sendgridSend({}, 'test-key', fetcher)).status).toBe('unknown')
-    expect(fetcher).toHaveBeenCalledTimes(1)
   })
 })

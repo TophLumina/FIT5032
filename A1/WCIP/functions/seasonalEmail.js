@@ -4,7 +4,7 @@ import { keyFor } from './reporting.js'
 import { siteDay } from './shared/siteDate.js'
 import { createSeasonalGuide, emailText, previewDigest } from './seasonalGuide.js'
 import { guidePdf } from './guidePdf.js'
-import { mailPayload } from './sendgrid.js'
+import { mailPayload } from './emailMessage.js'
 import { signedIn } from './identity.js'
 
 const maximumBatch = 10
@@ -24,14 +24,16 @@ function fields(data, allowed) {
 }
 function publicRecord(record, now) {
   if (!record) return { status: 'ready', message: 'Not sent this month.', attempts: 0 }
+  const provider = record.provider || 'sendgrid'
   if (record.status === 'processing' && now.getTime() - record.startedAt.toMillis() > 180000)
     return {
       status: 'unknown',
       message:
-        'An earlier attempt did not finish recording its result. Check SendGrid Email Activity; resending is blocked.',
+        'An earlier attempt did not finish recording its result. Check the sending provider before taking further action; resending is blocked.',
       attempts: record.attempts,
+      provider,
     }
-  return { status: record.status, message: record.message, attempts: record.attempts }
+  return { status: record.status, message: record.message, attempts: record.attempts, provider }
 }
 
 export function createSeasonalEmail({
@@ -219,6 +221,16 @@ export function createSeasonalEmail({
             attempts: record?.attempts || 0,
           }
         const attempts = (record?.attempts || 0) + 1
+        const history = [...(record?.history || [])]
+        if (record)
+          history.push({
+            provider: record.provider || 'sendgrid',
+            status: record.status,
+            message: record.message || '',
+            providerId: record.providerId || null,
+            startedAt: record.startedAt,
+            attempts: record.attempts,
+          })
         tx.set(ref, {
           uid,
           email: recipient.email,
@@ -226,6 +238,8 @@ export function createSeasonalEmail({
           requestId,
           digest,
           attempts,
+          provider: 'gmail',
+          history: history.slice(-2),
           status: 'processing',
           message: 'Sending is in progress. Do not start another attempt.',
           startedAt: Timestamp.fromDate(now()),
@@ -245,6 +259,7 @@ export function createSeasonalEmail({
           status: claim.status,
           message: claim.message,
           attempts: claim.attempts,
+          provider: claim.provider || 'gmail',
         })
         continue
       }
@@ -265,9 +280,10 @@ export function createSeasonalEmail({
         outcome = {
           status: 'unknown',
           message:
-            'The attempt could not be confirmed. Check SendGrid Email Activity; resending is blocked.',
+            'The attempt could not be confirmed. Check the sending mailbox Sent folder before taking further action; resending is blocked.',
         }
       }
+      outcome.provider = 'gmail'
       await ref.update({ ...outcome, updatedAt: FieldValue.serverTimestamp() })
       results.push({ uid, ...publicRecord({ ...outcome, attempts: claim.attempts }, now()) })
     }

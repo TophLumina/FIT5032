@@ -7,13 +7,15 @@ import { createBackend } from './backend.js'
 import { projectDocument } from './reporting.js'
 import { defineSecret } from 'firebase-functions/params'
 import { createSeasonalEmail } from './seasonalEmail.js'
-import { senderConfig, sendgridSend } from './sendgrid.js'
+import { senderConfig } from './emailMessage.js'
+import { createGmailSender } from './gmail.js'
 import plants from './data/plants.json' with { type: 'json' }
 
 initializeApp()
 const db = getFirestore()
 const backend = createBackend({ db, auth: getAuth(), plants })
-const sendgridKey = defineSecret('SENDGRID_API_KEY')
+const gmailCredentials = defineSecret('GMAIL_SENDER_CREDENTIALS')
+const sendGmail = createGmailSender({ getCredentials: () => gmailCredentials.value() })
 const seasonalEmail = createSeasonalEmail({
   db,
   auth: getAuth(),
@@ -22,9 +24,9 @@ const seasonalEmail = createSeasonalEmail({
     senderConfig(
       process.env.FUNCTIONS_EMULATOR === 'true'
         ? {
-            SENDGRID_FROM_EMAIL: 'wcip@example.test',
-            SENDGRID_FROM_NAME: 'WCIP (emulator)',
-            SENDGRID_REPLY_TO_EMAIL: 'wcip@example.test',
+            MAIL_FROM_EMAIL: 'wcip@example.test',
+            MAIL_FROM_NAME: 'WCIP (emulator)',
+            MAIL_REPLY_TO_EMAIL: 'wcip@example.test',
           }
         : process.env,
     ),
@@ -36,7 +38,7 @@ const seasonalEmail = createSeasonalEmail({
         message: 'Real email delivery is disabled in the emulator.',
         providerId: null,
       }
-    return sendgridSend(payload, sendgridKey.value())
+    return sendGmail(payload)
   },
 })
 const options = {
@@ -60,7 +62,7 @@ export const wcipDashboard = onCall(callableOptions, backend.getDashboard)
 export const wcipEmailPreferences = onCall(callableOptions, backend.emailPreferences)
 export const wcipSeasonalEmailPreview = onCall(callableOptions, seasonalEmail.preview)
 export const wcipSendSeasonalEmail = onCall(
-  { ...callableOptions, timeoutSeconds: 180, secrets: [sendgridKey] },
+  { ...callableOptions, timeoutSeconds: 180, secrets: [gmailCredentials] },
   seasonalEmail.send,
 )
 export const wcipAggregateVisits = onDocumentWritten(
