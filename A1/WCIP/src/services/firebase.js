@@ -2,6 +2,7 @@ import { getApp, getApps, initializeApp } from 'firebase/app'
 import {
   browserLocalPersistence,
   browserSessionPersistence,
+  browserPopupRedirectResolver,
   indexedDBLocalPersistence,
   initializeAuth,
   connectAuthEmulator,
@@ -33,9 +34,10 @@ const app = getApps().length
           }
         : config,
     )
-// Email/password auth needs no popup resolver or third-party sign-in scripts.
+// Firebase handles the Google OAuth popup and keeps provider credentials out of app storage.
 export const auth = initializeAuth(app, {
   persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence],
+  popupRedirectResolver: browserPopupRedirectResolver,
 })
 export const db = getFirestore(app)
 export const functions = getFunctions(app, 'australia-southeast1')

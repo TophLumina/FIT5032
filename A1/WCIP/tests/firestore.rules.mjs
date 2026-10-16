@@ -16,6 +16,7 @@ import {
   setDoc,
   updateDoc,
   Timestamp,
+  serverTimestamp,
 } from 'firebase/firestore'
 
 let environment
@@ -76,6 +77,43 @@ test('members can still read their own profile and public plant comments', async
   await assertSucceeds(getDoc(doc(db, 'users', 'member')))
   await assertSucceeds(getDocs(collection(db, 'discussions', 'plant:native-violet', 'comments')))
 })
+
+test('Google members can read their own profile and post comments without administrator access', async () => {
+  const google = { firebase: { sign_in_provider: 'google.com' } }
+  const db = environment.authenticatedContext('member', google).firestore()
+  await assertSucceeds(getDoc(doc(db, 'users', 'member')))
+  await assertSucceeds(getDoc(doc(db, 'admins', 'member')))
+  await assertFails(getDoc(doc(db, 'users', 'admin')))
+  await assertFails(getDocs(collection(db, 'users')))
+  await assertFails(setDoc(doc(db, 'admins', 'member'), { role: 'admin' }))
+  await assertSucceeds(
+    setDoc(doc(db, 'discussions', 'plant:native-violet', 'comments', 'google-member'), {
+      authorUid: 'member',
+      author: 'Google gardener',
+      message: 'This plant suits my garden.',
+      rating: 4,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }),
+  )
+  await assertFails(deleteDoc(doc(db, 'discussions', 'plant:native-violet', 'comments', 'one')))
+  const adminDb = environment.authenticatedContext('admin', google).firestore()
+  await assertSucceeds(getDoc(doc(adminDb, 'admins', 'admin')))
+  await assertSucceeds(
+    deleteDoc(doc(adminDb, 'discussions', 'plant:native-violet', 'comments', 'google-member')),
+  )
+  await assertFails(getDocs(collection(adminDb, 'users')))
+})
+
+test('anonymous and unsupported-provider sessions cannot use authenticated WCIP data', async () => {
+  for (const provider of ['anonymous', 'custom', 'facebook.com']) {
+    const db = environment
+      .authenticatedContext('member', { firebase: { sign_in_provider: provider } })
+      .firestore()
+    await assertFails(getDoc(doc(db, 'users', 'member')))
+    await assertFails(getDoc(doc(db, 'admins', 'member')))
+  }
+})
 test('neither members nor administrators can assign roles from the client', async () => {
   for (const uid of ['member', 'admin'])
     await assertFails(
@@ -122,6 +160,9 @@ for (const identity of ['member', 'admin'])
         'analyticsEntries/forged',
         'analyticsComments/forged',
         'analyticsUserStats/forged',
+        'seasonalMailIssues/2026-10',
+        'seasonalMailIssues/2026-10/recipients/forged',
+        'seasonalMailDays/2026-10-16',
       ]) {
         await assertFails(setDoc(doc(db, path), { count: 999, lastLoginAt: Timestamp.now() }))
         if (!path.startsWith('users/')) await assertFails(getDoc(doc(db, path)))

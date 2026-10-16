@@ -7,7 +7,12 @@ let latestRequest
 let queue = Promise.resolve()
 export function syncUserProfile(user) {
   if (!user?.email) return Promise.resolve()
-  const key = JSON.stringify([user.uid, user.displayName, user.metadata?.lastSignInTime])
+  const key = JSON.stringify([
+    user.uid,
+    user.email,
+    user.displayName,
+    user.metadata?.lastSignInTime,
+  ])
   if (key === latestKey && latestRequest) return latestRequest
   latestKey = key
   // Registration may update displayName after the initial Auth callback.

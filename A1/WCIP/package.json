@@ -24,7 +24,7 @@
     "api:dev": "wrangler dev --ip 127.0.0.1",
     "api:check": "wrangler deploy --dry-run",
     "deploy:api": "wrangler deploy",
-    "test:functions": "npm run functions:check && firebase emulators:exec --config firebase.emulators.json --only auth,firestore,functions --project demo-wcip \"node --test tests/functions.integration.mjs\""
+    "test:functions": "npm run functions:check && firebase emulators:exec --config firebase.emulators.json --only auth,firestore,functions --project demo-wcip \"node --test --test-concurrency=1 tests/functions.integration.mjs tests/seasonalEmail.integration.mjs\""
   },
   "dependencies": {
     "bootstrap": "^5.3.8",

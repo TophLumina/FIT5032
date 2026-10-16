@@ -29,6 +29,15 @@ describe('Firebase JWT verification', () => {
       'ordinary-gardener',
     )
   })
+  it('accepts a Google session through the existing Firebase signature and project checks', async () => {
+    expect(
+      await verifyFirebaseToken(
+        await token({ firebase: { sign_in_provider: 'google.com' } }),
+        projectId,
+        keys.publicKey,
+      ),
+    ).toBe('ordinary-gardener')
+  })
   it.each([
     { aud: 'different-project' },
     { iss: 'https://attacker.test' },

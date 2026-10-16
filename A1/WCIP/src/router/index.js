@@ -3,6 +3,12 @@ import { authInitialized, user, waitForAdminRole } from '@/services/auth'
 
 const routes = [
   {
+    path: '/admin/email',
+    name: 'seasonal-email',
+    component: () => import('@/views/SeasonalEmailView.vue'),
+    meta: { title: 'Seasonal planting emails', requiresAuth: true, requiresAdmin: true },
+  },
+  {
     path: '/map',
     name: 'plant-map',
     component: () => import('@/views/PlantMapView.vue'),

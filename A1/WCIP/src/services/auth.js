@@ -1,10 +1,13 @@
-import { readonly, shallowRef } from 'vue'
+import { readonly, shallowRef, triggerRef } from 'vue'
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
+  linkWithPopup,
 } from 'firebase/auth'
 import { doc, getDocFromServer, onSnapshot } from 'firebase/firestore'
 import { auth, db } from './firebase'
@@ -105,6 +108,32 @@ export async function login(email, password) {
   currentUser.value = result.user
 }
 
+function googleProvider() {
+  const provider = new GoogleAuthProvider()
+  provider.setCustomParameters({ prompt: 'select_account' })
+  return provider
+}
+
+export async function loginWithGoogle() {
+  // Start directly from a user click so browsers can open the OAuth window.
+  const result = await signInWithPopup(auth, googleProvider())
+  currentUser.value = result.user
+  updateUserDirectory(result.user)
+}
+
+export async function connectGoogle() {
+  const account = auth.currentUser
+  if (!account)
+    throw Object.assign(new Error('Sign in first.'), { code: 'auth/requires-recent-login' })
+  const result = await linkWithPopup(account, googleProvider())
+  if (auth.currentUser?.uid !== account.uid)
+    throw new DOMException('Account changed.', 'AbortError')
+  currentUser.value = result.user
+  // Linking mutates the existing Firebase User instance; notify consumers of its provider data.
+  triggerRef(currentUser)
+  updateUserDirectory(result.user)
+}
+
 export async function register(displayName, email, password) {
   const result = await createUserWithEmailAndPassword(auth, email.trim(), password)
   // Account creation has already succeeded if updating the optional display name fails.
@@ -138,7 +167,21 @@ export function authErrorMessage(error) {
     'auth/too-many-requests': 'Too many attempts. Please wait before trying again.',
     'auth/network-request-failed': 'Could not connect. Check your connection and try again.',
     'auth/user-disabled': 'This account is unavailable.',
-    'auth/operation-not-allowed': 'Email sign-in is currently unavailable.',
+    'auth/operation-not-allowed': 'This sign-in method is currently unavailable.',
+    'auth/popup-blocked':
+      'Your browser blocked the Google sign-in window. Allow pop-ups for this site, then try again.',
+    'auth/popup-closed-by-user': 'Google sign-in was cancelled. You can try again.',
+    'auth/cancelled-popup-request':
+      'Another sign-in window was opened. Complete the latest window.',
+    'auth/unauthorized-domain': 'Google sign-in is not configured for this website address.',
+    'auth/account-exists-with-different-credential':
+      'This email already has a WCIP account. Sign in with your existing method, then connect Google in My account.',
+    'auth/credential-already-in-use':
+      'This Google account belongs to another WCIP account. Sign in to that account instead; accounts are not merged automatically.',
+    'auth/provider-already-linked': 'A Google account is already connected to this WCIP account.',
+    'auth/requires-recent-login': 'Sign out and sign in again before connecting a Google account.',
+    'auth/operation-not-supported-in-this-environment':
+      'Open this site in a full browser to sign in with Google.',
   }
   return messages[error?.code] ?? 'Unable to complete the request. Please try again.'
 }

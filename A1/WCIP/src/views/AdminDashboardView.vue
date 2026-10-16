@@ -23,6 +23,7 @@ const showLogins = ref(true)
 const showLoginUsers = ref(true)
 const metric = ref('comments')
 const role = ref('All')
+const subscription = ref('All')
 const selectedDay = ref('')
 const selectedPlant = ref('')
 const detailPanel = ref(null)
@@ -31,7 +32,12 @@ let requestId = 0,
 const dashboard = computed(() => data.value)
 const users = computed(
   () =>
-    dashboard.value?.users.filter((user) => role.value === 'All' || user.role === role.value) ?? [],
+    dashboard.value?.users.filter(
+      (user) =>
+        (role.value === 'All' || user.role === role.value) &&
+        (subscription.value === 'All' ||
+          (user.seasonalEmailSubscribed === true) === (subscription.value === 'Subscribed')),
+    ) ?? [],
 )
 const series = computed(() => [
   ...(showVisits.value ? [{ key: 'visits', label: 'Recorded visits', color: '#24563f' }] : []),
@@ -69,6 +75,11 @@ const userColumns = [
   { key: 'email', label: 'Email' },
   { key: 'displayName', label: 'Display name' },
   { key: 'role', label: 'Role' },
+  {
+    key: 'seasonalEmailSubscribed',
+    label: 'Seasonal emails',
+    format: (value) => (value === true ? 'Subscribed' : 'Not subscribed'),
+  },
   { key: 'commentCount', label: 'Current comments' },
   {
     key: 'lastLoginAt',
@@ -182,9 +193,12 @@ onBeforeUnmount(() => {
           Understand participation and explore the plants people discuss.
         </p>
       </div>
-      <button class="btn btn-outline-primary" type="button" :disabled="loading" @click="refresh">
-        {{ loading ? 'Loading…' : 'Refresh data' }}
-      </button>
+      <div class="d-flex flex-wrap gap-2">
+        <RouterLink to="/admin/email" class="btn btn-primary">Seasonal emails</RouterLink>
+        <button class="btn btn-outline-primary" type="button" :disabled="loading" @click="refresh">
+          {{ loading ? 'Loading…' : 'Refresh data' }}
+        </button>
+      </div>
     </header>
 
     <form class="card card-body mb-4" @submit.prevent="refresh">
@@ -565,8 +579,22 @@ onBeforeUnmount(() => {
               Show all roles
             </button>
           </div>
+          <div class="mb-3">
+            <label for="admin-email-subscription" class="form-label"
+              >Seasonal email subscription</label
+            >
+            <select id="admin-email-subscription" v-model="subscription" class="form-select">
+              <option>All</option>
+              <option>Subscribed</option>
+              <option>Not subscribed</option>
+            </select>
+            <p class="small text-body-secondary mt-2 mb-0">
+              Users manage their own subscription in My account. Only opted-in site users may
+              receive seasonal planting emails. Refresh to retrieve the latest preferences.
+            </p>
+          </div>
           <InteractiveTable
-            :key="role"
+            :key="role + subscription"
             id="admin-users"
             caption="Registered users, roles and current comment counts"
             :rows="users"

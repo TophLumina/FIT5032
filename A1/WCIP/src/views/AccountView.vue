@@ -1,5 +1,7 @@
 <script setup>
 import { RouterLink, useRoute } from 'vue-router'
+import EmailPreferences from '@/components/EmailPreferences.vue'
+import AccountSignInMethods from '@/components/AccountSignInMethods.vue'
 import { adminRoleError, isAdmin, user, userProfileError } from '@/services/auth'
 
 const route = useRoute()
@@ -30,6 +32,8 @@ const route = useRoute()
           >Admin dashboard</RouterLink
         >
         <RouterLink class="btn btn-primary" :to="{ name: 'plants' }">Find a plant</RouterLink>
+        <EmailPreferences />
+        <AccountSignInMethods />
       </div>
     </div>
   </section>

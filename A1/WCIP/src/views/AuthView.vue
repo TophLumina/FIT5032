@@ -1,7 +1,8 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { authErrorMessage, authReady, login, register } from '@/services/auth'
+import { authErrorMessage, authReady, login, loginWithGoogle, register } from '@/services/auth'
+import GoogleAuthButton from '@/components/GoogleAuthButton.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -11,6 +12,7 @@ const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const busy = ref(false)
+const googleBusy = ref(false)
 const errorMessage = ref('')
 
 watch(
@@ -72,6 +74,24 @@ async function submit() {
     busy.value = false
   }
 }
+
+async function submitGoogle() {
+  if (busy.value || !authReady.value) return
+  busy.value = true
+  googleBusy.value = true
+  errorMessage.value = ''
+  try {
+    await loginWithGoogle()
+    await router.replace(destination())
+  } catch (error) {
+    errorMessage.value = authErrorMessage(error)
+  } finally {
+    password.value = ''
+    confirmPassword.value = ''
+    busy.value = false
+    googleBusy.value = false
+  }
+}
 </script>
 
 <template>
@@ -84,6 +104,23 @@ async function submit() {
             <h1 id="auth-title" class="h2">{{ isRegister ? 'Create an account' : 'Sign in' }}</h1>
             <p class="text-body-secondary">
               Sign in to join the discussion and share plant ratings in your comments.
+            </p>
+            <GoogleAuthButton
+              :disabled="busy || !authReady"
+              :busy="googleBusy"
+              @click="submitGoogle"
+            />
+            <p class="small text-body-secondary mt-2">
+              New here? Continuing with Google creates your WCIP account. Seasonal emails are
+              optional and off by default.
+            </p>
+            <div class="d-flex align-items-center gap-3 my-4" aria-hidden="true">
+              <hr class="flex-grow-1" />
+              <span class="small text-body-secondary">or use email</span>
+              <hr class="flex-grow-1" />
+            </div>
+            <p v-if="errorMessage" id="auth-error" class="alert alert-danger mb-3" role="alert">
+              {{ errorMessage }}
             </p>
             <form @submit.prevent="submit">
               <fieldset :disabled="busy || !authReady">
@@ -146,9 +183,6 @@ async function submit() {
                   {{ busy ? 'Please wait…' : isRegister ? 'Create account' : 'Sign in' }}
                 </button>
               </fieldset>
-              <p v-if="errorMessage" class="alert alert-danger mt-3 mb-0" role="alert">
-                {{ errorMessage }}
-              </p>
             </form>
             <p class="mt-4 mb-0">
               {{ isRegister ? 'Already have an account?' : 'New here?' }}

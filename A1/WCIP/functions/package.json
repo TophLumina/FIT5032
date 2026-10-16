@@ -8,10 +8,11 @@
   },
   "scripts": {
     "precheck": "node ../scripts/prepare-functions.mjs",
-    "check": "node --check index.js && node --check backend.js && node --check reporting.js"
+    "check": "node --check index.js && node --check identity.js && node --check backend.js && node --check reporting.js && node --check seasonalEmail.js && node --check seasonalGuide.js && node --check guidePdf.js && node --check sendgrid.js"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",
-    "firebase-functions": "^7.4.0"
+    "firebase-functions": "^7.4.0",
+    "pdfkit": "^0.20.2"
   }
 }

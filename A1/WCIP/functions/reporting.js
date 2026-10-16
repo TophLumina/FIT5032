@@ -129,6 +129,7 @@ export function buildReport({
     role: adminIds.has(profile.uid) ? 'Administrator' : 'Gardener',
     commentCount: userStats.get(profile.uid)?.commentCount ?? 0,
     lastLoginAt: iso(profile.lastLoginAt),
+    seasonalEmailSubscribed: profile.seasonalEmailSubscribed === true,
   }))
   const trend = range.days.map((day) => ({
     day,

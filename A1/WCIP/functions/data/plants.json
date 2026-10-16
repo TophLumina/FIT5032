@@ -1,98 +1,237 @@
 [
   {
     "slug": "native-violet",
-    "commonName": "Native Violet"
+    "commonName": "Native Violet",
+    "scientificName": "Viola hederacea",
+    "sunlight": [
+      "part-shade",
+      "shade"
+    ],
+    "water": "moderate"
   },
   {
     "slug": "coastal-rosemary",
-    "commonName": "Coastal Rosemary"
+    "commonName": "Coastal Rosemary",
+    "scientificName": "Westringia fruticosa",
+    "sunlight": [
+      "full-sun",
+      "part-shade"
+    ],
+    "water": "low"
   },
   {
     "slug": "chocolate-lily",
-    "commonName": "Chocolate Lily"
+    "commonName": "Chocolate Lily",
+    "scientificName": "Arthropodium strictum",
+    "sunlight": [
+      "full-sun",
+      "part-shade"
+    ],
+    "water": "low"
   },
   {
     "slug": "common-everlasting",
-    "commonName": "Common Everlasting"
+    "commonName": "Common Everlasting",
+    "scientificName": "Chrysocephalum apiculatum",
+    "sunlight": [
+      "full-sun"
+    ],
+    "water": "low"
   },
   {
     "slug": "kidney-weed",
-    "commonName": "Kidney Weed"
+    "commonName": "Kidney Weed",
+    "scientificName": "Dichondra repens",
+    "sunlight": [
+      "part-shade",
+      "shade"
+    ],
+    "water": "moderate"
   },
   {
     "slug": "silver-banksia",
-    "commonName": "Silver Banksia"
+    "commonName": "Silver Banksia",
+    "scientificName": "Banksia marginata",
+    "sunlight": [
+      "full-sun"
+    ],
+    "water": "low"
   },
   {
     "slug": "kangaroo-paw",
-    "commonName": "Kangaroo Paw"
+    "commonName": "Kangaroo Paw",
+    "scientificName": "Anigozanthos flavidus",
+    "sunlight": [
+      "full-sun"
+    ],
+    "water": "moderate"
   },
   {
     "slug": "common-correa",
-    "commonName": "Common Correa"
+    "commonName": "Common Correa",
+    "scientificName": "Correa reflexa",
+    "sunlight": [
+      "part-shade"
+    ],
+    "water": "low"
   },
   {
     "slug": "river-mint",
-    "commonName": "River Mint"
+    "commonName": "River Mint",
+    "scientificName": "Mentha australis",
+    "sunlight": [
+      "part-shade",
+      "shade"
+    ],
+    "water": "regular"
   },
   {
     "slug": "blue-flax-lily",
-    "commonName": "Blue Flax-lily"
+    "commonName": "Blue Flax-lily",
+    "scientificName": "Dianella revoluta",
+    "sunlight": [
+      "full-sun",
+      "part-shade"
+    ],
+    "water": "low"
   },
   {
     "slug": "cut-leaf-daisy",
-    "commonName": "Cut-leaf Daisy"
+    "commonName": "Cut-leaf Daisy",
+    "scientificName": "Brachyscome multifida",
+    "sunlight": [
+      "full-sun",
+      "part-shade"
+    ],
+    "water": "moderate"
   },
   {
     "slug": "woolly-grevillea",
-    "commonName": "Woolly Grevillea"
+    "commonName": "Woolly Grevillea",
+    "scientificName": "Grevillea lanigera",
+    "sunlight": [
+      "full-sun"
+    ],
+    "water": "low"
   },
   {
     "slug": "purple-coral-pea",
-    "commonName": "Purple Coral Pea"
+    "commonName": "Purple Coral Pea",
+    "scientificName": "Hardenbergia violacea",
+    "sunlight": [
+      "full-sun",
+      "part-shade"
+    ],
+    "water": "low"
   },
   {
     "slug": "climbing-guinea-flower",
-    "commonName": "Climbing Guinea Flower"
+    "commonName": "Climbing Guinea Flower",
+    "scientificName": "Hibbertia scandens",
+    "sunlight": [
+      "full-sun",
+      "part-shade"
+    ],
+    "water": "moderate"
   },
   {
     "slug": "spiny-headed-mat-rush",
-    "commonName": "Spiny-headed Mat-rush"
+    "commonName": "Spiny-headed Mat-rush",
+    "scientificName": "Lomandra longifolia",
+    "sunlight": [
+      "full-sun",
+      "part-shade"
+    ],
+    "water": "low"
   },
   {
     "slug": "kangaroo-grass",
-    "commonName": "Kangaroo Grass"
+    "commonName": "Kangaroo Grass",
+    "scientificName": "Themeda triandra",
+    "sunlight": [
+      "full-sun",
+      "part-shade"
+    ],
+    "water": "low"
   },
   {
     "slug": "common-tussock-grass",
-    "commonName": "Common Tussock Grass"
+    "commonName": "Common Tussock Grass",
+    "scientificName": "Poa labillardierei",
+    "sunlight": [
+      "full-sun",
+      "part-shade"
+    ],
+    "water": "low"
   },
   {
     "slug": "bulbine-lily",
-    "commonName": "Bulbine Lily"
+    "commonName": "Bulbine Lily",
+    "scientificName": "Bulbine bulbosa",
+    "sunlight": [
+      "full-sun",
+      "part-shade"
+    ],
+    "water": "moderate"
   },
   {
     "slug": "tall-bluebell",
-    "commonName": "Tall Bluebell"
+    "commonName": "Tall Bluebell",
+    "scientificName": "Wahlenbergia stricta",
+    "sunlight": [
+      "full-sun",
+      "part-shade"
+    ],
+    "water": "moderate"
   },
   {
     "slug": "austral-storks-bill",
-    "commonName": "Austral Stork's-bill"
+    "commonName": "Austral Stork's-bill",
+    "scientificName": "Pelargonium australe",
+    "sunlight": [
+      "full-sun",
+      "part-shade"
+    ],
+    "water": "low"
   },
   {
     "slug": "fairy-fan-flower",
-    "commonName": "Fairy Fan-flower"
+    "commonName": "Fairy Fan-flower",
+    "scientificName": "Scaevola aemula",
+    "sunlight": [
+      "full-sun"
+    ],
+    "water": "moderate"
   },
   {
     "slug": "prickly-tea-tree",
-    "commonName": "Prickly Tea-tree"
+    "commonName": "Prickly Tea-tree",
+    "scientificName": "Leptospermum continentale",
+    "sunlight": [
+      "full-sun",
+      "part-shade"
+    ],
+    "water": "moderate"
   },
   {
     "slug": "white-correa",
-    "commonName": "White Correa"
+    "commonName": "White Correa",
+    "scientificName": "Correa alba",
+    "sunlight": [
+      "full-sun",
+      "part-shade"
+    ],
+    "water": "low"
   },
   {
     "slug": "hop-goodenia",
-    "commonName": "Hop Goodenia"
+    "commonName": "Hop Goodenia",
+    "scientificName": "Goodenia ovata",
+    "sunlight": [
+      "full-sun",
+      "part-shade",
+      "shade"
+    ],
+    "water": "moderate"
   }
 ]

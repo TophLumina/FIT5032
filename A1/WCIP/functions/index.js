@@ -5,11 +5,40 @@ import { getAuth } from 'firebase-admin/auth'
 import { getFirestore } from 'firebase-admin/firestore'
 import { createBackend } from './backend.js'
 import { projectDocument } from './reporting.js'
+import { defineSecret } from 'firebase-functions/params'
+import { createSeasonalEmail } from './seasonalEmail.js'
+import { senderConfig, sendgridSend } from './sendgrid.js'
 import plants from './data/plants.json' with { type: 'json' }
 
 initializeApp()
 const db = getFirestore()
 const backend = createBackend({ db, auth: getAuth(), plants })
+const sendgridKey = defineSecret('SENDGRID_API_KEY')
+const seasonalEmail = createSeasonalEmail({
+  db,
+  auth: getAuth(),
+  plants,
+  getSender: () =>
+    senderConfig(
+      process.env.FUNCTIONS_EMULATOR === 'true'
+        ? {
+            SENDGRID_FROM_EMAIL: 'wcip@example.test',
+            SENDGRID_FROM_NAME: 'WCIP (emulator)',
+            SENDGRID_REPLY_TO_EMAIL: 'wcip@example.test',
+          }
+        : process.env,
+    ),
+  sendMail: async (payload) => {
+    // Emulators must never access the real provider, even if local credentials are present.
+    if (process.env.FUNCTIONS_EMULATOR === 'true')
+      return {
+        status: 'rejected',
+        message: 'Real email delivery is disabled in the emulator.',
+        providerId: null,
+      }
+    return sendgridSend(payload, sendgridKey.value())
+  },
+})
 const options = {
   region: 'australia-southeast1',
   minInstances: 0,
@@ -28,6 +57,12 @@ const callableOptions = {
 }
 export const wcipSyncUserActivity = onCall(callableOptions, backend.syncUserActivity)
 export const wcipDashboard = onCall(callableOptions, backend.getDashboard)
+export const wcipEmailPreferences = onCall(callableOptions, backend.emailPreferences)
+export const wcipSeasonalEmailPreview = onCall(callableOptions, seasonalEmail.preview)
+export const wcipSendSeasonalEmail = onCall(
+  { ...callableOptions, timeoutSeconds: 180, secrets: [sendgridKey] },
+  seasonalEmail.send,
+)
 export const wcipAggregateVisits = onDocumentWritten(
   { ...options, retry: true, document: 'visits/{visitId}' },
   (event) => projectDocument(db, `visits/${event.params.visitId}`),

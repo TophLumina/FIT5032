@@ -3,12 +3,7 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore'
 import { analyticsRange } from './shared/range.js'
 import { siteDay } from './shared/siteDate.js'
 import { asDate, buildReport, keyFor } from './reporting.js'
-
-function signedIn(request) {
-  if (!request.auth || request.auth.token.firebase?.sign_in_provider !== 'password')
-    throw new HttpsError('unauthenticated', 'Sign in with your WCIP account.')
-  return request.auth.uid
-}
+import { signedIn } from './identity.js'
 function input(request, keys = []) {
   if (
     !request.data ||
@@ -68,17 +63,26 @@ export function createBackend({ db, auth, plants, now = () => new Date() }) {
         email: account.email,
         displayName: (account.displayName || '').trim().slice(0, 30),
         lastLoginAt: Timestamp.fromDate(lastLoginAt),
+        // Consent is opt-in and belongs to the email address the user subscribed with.
+        seasonalEmailSubscribed:
+          profile.data()?.email === account.email &&
+          profile.data()?.seasonalEmailSubscribed === true,
       }
       if (
         !profile.exists ||
         profile.data().email !== canonical.email ||
         profile.data().displayName !== canonical.displayName ||
+        profile.data().seasonalEmailSubscribed !== canonical.seasonalEmailSubscribed ||
         asDate(profile.data().lastLoginAt)?.getTime() !== lastLoginAt.getTime()
       ) {
         tx.set(
           profileRef,
           {
             ...canonical,
+            ...(profile.data()?.seasonalEmailSubscribed === true &&
+            !canonical.seasonalEmailSubscribed
+              ? { seasonalEmailUpdatedAt: FieldValue.serverTimestamp() }
+              : {}),
             createdAt: Timestamp.fromDate(new Date(account.metadata.creationTime)),
             updatedAt: FieldValue.serverTimestamp(),
           },
@@ -99,6 +103,44 @@ export function createBackend({ db, auth, plants, now = () => new Date() }) {
         )
       }
       return { synced: true, loginRecorded: recordLogin }
+    })
+  }
+  async function emailPreferences(request) {
+    const uid = signedIn(request)
+    input(request, ['subscribed'])
+    const updating = Object.hasOwn(request.data, 'subscribed')
+    if (updating && typeof request.data.subscribed !== 'boolean')
+      throw new HttpsError('invalid-argument', 'Subscription must be true or false.')
+    return db.runTransaction(async (tx) => {
+      const profileRef = db.doc(`users/${uid}`)
+      const profile = (await tx.get(profileRef)).data()
+      const account = await auth.getUser(uid)
+      const authTime = request.auth.token.auth_time
+      if (
+        account.disabled ||
+        !account.email ||
+        !Number.isInteger(authTime) ||
+        authTime * 1000 > now().getTime() + 60000 ||
+        authTime < Math.floor(Date.parse(account.tokensValidAfterTime || 0) / 1000)
+      )
+        throw new HttpsError('unauthenticated', 'Your account session is no longer valid.')
+      if (!profile || profile.email !== account.email)
+        throw new HttpsError('failed-precondition', 'Sign in again to synchronize your account.')
+      const subscribed = profile.seasonalEmailSubscribed === true
+      let updatedAt = asDate(profile.seasonalEmailUpdatedAt)?.toISOString() ?? null
+      if (updating && profile.seasonalEmailSubscribed !== request.data.subscribed) {
+        const timestamp = Timestamp.fromDate(now())
+        tx.update(profileRef, {
+          seasonalEmailSubscribed: request.data.subscribed,
+          seasonalEmailUpdatedAt: timestamp,
+        })
+        updatedAt = timestamp.toDate().toISOString()
+      }
+      return {
+        subscribed: updating ? request.data.subscribed : subscribed,
+        email: account.email,
+        updatedAt,
+      }
     })
   }
   async function bounded(query, maximum, label) {
@@ -157,5 +199,5 @@ export function createBackend({ db, auth, plants, now = () => new Date() }) {
       plants,
     })
   }
-  return { syncUserActivity, getDashboard }
+  return { syncUserActivity, getDashboard, emailPreferences }
 }

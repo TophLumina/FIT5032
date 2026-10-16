@@ -38,6 +38,9 @@ coverage
 /public/images/generated/
 /src/generated/responsive-images.json
 
+# Keep the official Google sign-in logo despite the repository-wide PNG ignore.
+!/public/images/brand/google-g.png
+
 # Cloudflare local runtime and deployment state
 .wrangler/
 .dev.vars

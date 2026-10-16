@@ -45,6 +45,7 @@ const source = {
     email: 'user' + i + '@example.test',
     displayName: 'Gardener ' + i,
     role: i === 0 ? 'Administrator' : 'Gardener',
+    seasonalEmailSubscribed: i === 1,
     commentCount: i === 0 ? 1 : 0,
     lastLoginAt: i === 0 ? new Date().toISOString() : null,
   })),
@@ -78,6 +79,21 @@ beforeEach(() => {
 })
 
 describe('administrator dashboard', () => {
+  it('filters email subscribers without granting administrators a consent-editing control', async () => {
+    const wrapper = render()
+    await flushPromises()
+    await wrapper.get('#admin-email-subscription').setValue('Subscribed')
+    const table = wrapper.get('[aria-label="Registered users, roles and current comment counts"]')
+    expect(table.findAll('tbody tr')).toHaveLength(1)
+    expect(table.get('tbody').text()).toContain('user1@example.test')
+    expect(table.get('tbody').text()).toContain('Subscribed')
+    expect(table.find('tbody input').exists()).toBe(false)
+    await wrapper.get('#admin-email-subscription').setValue('Not subscribed')
+    expect(wrapper.get('#admin-users-help').exists()).toBe(true)
+    expect(
+      wrapper.get('[aria-label="Registered users, roles and current comment counts"] tbody').text(),
+    ).not.toContain('user1@example.test')
+  })
   it('shows real aggregates, ten-row users and role/column filters', async () => {
     const wrapper = render()
     await flushPromises()
