@@ -37,6 +37,7 @@ const navItems = [
   { label: 'Plants', to: { name: 'plants' }, section: '/plants' },
   { label: 'Plant Map', to: { name: 'plant-map' }, section: '/map' },
   { label: 'Guides', to: { name: 'guides' }, section: '/guides' },
+  { label: 'AI Assistant', to: { name: 'garden-assistant' }, section: '/assistant' },
   { label: 'About', to: { name: 'about' }, section: '/about' },
 ]
 

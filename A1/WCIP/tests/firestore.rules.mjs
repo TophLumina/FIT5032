@@ -15,6 +15,7 @@ import {
   getCountFromServer,
   query,
   setDoc,
+  updateDoc,
   Timestamp,
   where,
 } from 'firebase/firestore'
@@ -41,6 +42,7 @@ before(async () => {
         visitedAt: Timestamp.fromDate(new Date('2026-10-15T00:00:00Z')),
       }),
       setDoc(doc(db, 'status', 'config'), { trackingStartedAt: Timestamp.now() }),
+      setDoc(doc(db, 'books', 'legacy-book'), { name: 'Exercise fixture', isbn: 123 }),
       setDoc(doc(db, 'discussions', 'plant:native-violet', 'comments', 'one'), {
         authorUid: 'member',
         message: 'A useful plant.',
@@ -98,11 +100,21 @@ test('neither members nor administrators can assign roles from the client', asyn
       }),
     )
 })
-test('existing Week67 books rule is retained', async () => {
-  await assertSucceeds(
-    getDocs(collection(environment.unauthenticatedContext().firestore(), 'books')),
-  )
-})
+for (const identity of ['guest', 'member', 'admin'])
+  test(`${identity} cannot access or recreate exercise collections`, async () => {
+    const db =
+      identity === 'guest'
+        ? environment.unauthenticatedContext().firestore()
+        : environment.authenticatedContext(identity, password).firestore()
+    await Promise.all([
+      assertFails(getDocs(collection(db, 'books'))),
+      assertFails(getDoc(doc(db, 'books', 'legacy-book'))),
+      assertFails(setDoc(doc(db, 'books', 'new-book'), { name: 'Exercise', isbn: 456 })),
+      assertFails(updateDoc(doc(db, 'books', 'legacy-book'), { name: 'Changed' })),
+      assertFails(deleteDoc(doc(db, 'books', 'legacy-book'))),
+      assertFails(setDoc(doc(db, 'library', 'new-book'), { name: 'Exercise' })),
+    ])
+  })
 test('revoking the administrator document denies subsequent report reads', async () => {
   await environment.withSecurityRulesDisabled((context) =>
     deleteDoc(doc(context.firestore(), 'admins', 'admin')),

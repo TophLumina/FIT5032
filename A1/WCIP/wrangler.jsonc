@@ -6,4 +6,16 @@
   "workers_dev": true,
   "preview_urls": false,
   "observability": { "enabled": false },
+  "vars": {
+    "FIREBASE_PROJECT_ID": "fit5032-e0aef",
+    "OPENAI_MODEL": "gpt-4.1-mini",
+  },
+  "d1_databases": [
+    {
+      "binding": "AI_DB",
+      "database_name": "wcip-ai-usage",
+      "database_id": "0b9a9ff3-e4e2-4304-828e-88679da7f356",
+      "migrations_dir": "worker/migrations",
+    },
+  ],
 }

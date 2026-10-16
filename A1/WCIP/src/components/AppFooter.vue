@@ -11,7 +11,7 @@ import { RouterLink } from 'vue-router'
         <RouterLink :to="{ name: 'plant-map' }">Plant Map</RouterLink>
         <RouterLink :to="{ name: 'guides' }">Guides</RouterLink>
         <RouterLink :to="{ name: 'about' }">About</RouterLink>
-        <RouterLink :to="{ name: 'plant-api' }">Plant API</RouterLink>
+        <RouterLink :to="{ name: 'garden-assistant' }">AI Assistant</RouterLink>
       </nav>
     </div>
   </footer>

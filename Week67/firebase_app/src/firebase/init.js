@@ -1,20 +1,19 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { initializeApp } from 'firebase/app'
+import { connectAuthEmulator, getAuth } from 'firebase/auth'
+import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyBSXXF3JVuxtvCD5fteR1ug1BRwZdiuEE8",
-  authDomain: "fit5032-e0aef.firebaseapp.com",
-  projectId: "fit5032-e0aef",
-  storageBucket: "fit5032-e0aef.firebasestorage.app",
-  messagingSenderId: "162413777778",
-  appId: "1:162413777778:web:d0ac6d5e421c91dae943eb"
-};
+// This exercise runs locally only. Never connect it to the WCIP production project.
+const app = initializeApp({
+  apiKey: 'demo-week67-key',
+  authDomain: 'demo-week67.firebaseapp.com',
+  projectId: 'demo-week67',
+})
+const auth = getAuth(app)
+const db = getFirestore(app)
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// Keep these ports separate from WCIP's demo-wcip emulators (9099 / 8080).
+// With the emulators stopped, requests fail locally; there is no cloud fallback.
+connectAuthEmulator(auth, 'http://127.0.0.1:9098')
+connectFirestoreEmulator(db, '127.0.0.1', 8088)
+
 export default db

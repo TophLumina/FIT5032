@@ -40,3 +40,5 @@ coverage
 
 # Cloudflare local runtime and deployment state
 .wrangler/
+.dev.vars
+.dev.vars.*

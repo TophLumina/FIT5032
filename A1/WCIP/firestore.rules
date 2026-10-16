@@ -107,11 +107,6 @@ service cloud.firestore {
       allow delete: if knownDiscussion(contentKey) && admin();
     }
 
-    // Week 6-7 allows all users to read and write books.
-    match /books/{bookId} {
-      allow read, write: if true;
-    }
-
     match /{document=**} {
       allow read, write: if false;
     }

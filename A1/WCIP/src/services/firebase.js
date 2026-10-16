@@ -8,7 +8,7 @@ import {
 } from 'firebase/auth'
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
 
-// Public web configuration, identical to Week67/firebase_app/src/main.js.
+// WCIP production configuration. Course exercises use separate local emulators.
 const config = {
   apiKey: 'AIzaSyBSXXF3JVuxtvCD5fteR1ug1BRwZdiuEE8',
   authDomain: 'fit5032-e0aef.firebaseapp.com',

@@ -177,6 +177,11 @@ watch(
                   >Explore observation map</RouterLink
                 >
                 <a class="btn btn-outline-primary" href="#sources">Where to find it →</a>
+                <RouterLink
+                  class="btn btn-outline-primary"
+                  :to="{ name: 'garden-assistant', query: { plant: plant.slug } }"
+                  >Ask the AI assistant</RouterLink
+                >
               </div>
             </div>
           </div>

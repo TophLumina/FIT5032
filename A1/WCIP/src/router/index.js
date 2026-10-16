@@ -10,9 +10,13 @@ const routes = [
   },
   {
     path: '/developers',
-    name: 'plant-api',
-    component: () => import('@/views/PlantApiView.vue'),
-    meta: { title: 'Plant API' },
+    redirect: '/assistant',
+  },
+  {
+    path: '/assistant',
+    name: 'garden-assistant',
+    component: () => import('@/views/GardenAssistantView.vue'),
+    meta: { title: 'AI Garden Assistant' },
   },
   {
     path: '/admin',

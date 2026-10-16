@@ -1,6 +1,24 @@
 # firebase_app
 
-This template should help get you started developing with Vue 3 in Vite.
+This course exercise uses the local Firebase demo project `demo-week67`. It must
+not use WCIP's production Firebase project (`fit5032-e0aef`).
+
+## Isolated Firebase setup
+
+Start Auth (127.0.0.1:9098) and Firestore (127.0.0.1:8088) from `A1/WCIP`, which
+already includes the Firebase CLI:
+
+```powershell
+$env:DEBUG = $null
+npx firebase emulators:start --config ../../Week67/firbase_emulator/firebase.json --project demo-week67 --only auth,firestore
+```
+
+Then run `npm run dev` from `Week67/firebase_app` in another terminal. Create a
+new local account for the exercise; WCIP accounts are not imported. Local emulator
+data is temporary unless explicitly exported. Stopping the emulators makes exercise
+requests fail locally; both development and built code have no production fallback.
+The permissive books rules belong only to this demo and must not be deployed to a
+real Firebase project. WCIP uses separate emulator ports (9099 / 8080).
 
 ## Recommended IDE Setup
 
