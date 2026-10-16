@@ -163,6 +163,7 @@ for (const identity of ['member', 'admin'])
         'seasonalMailIssues/2026-10',
         'seasonalMailIssues/2026-10/recipients/forged',
         'seasonalMailDays/2026-10-16',
+        'seasonalMailDrafts/2026-10',
       ]) {
         await assertFails(setDoc(doc(db, path), { count: 999, lastLoginAt: Timestamp.now() }))
         if (!path.startsWith('users/')) await assertFails(getDoc(doc(db, path)))

@@ -3,6 +3,7 @@ import { auth, functions } from './firebase'
 import { syncUserProfile } from './users'
 
 const preview = httpsCallable(functions, 'wcipSeasonalEmailPreview')
+const saveDraft = httpsCallable(functions, 'wcipSaveSeasonalEmailDraft')
 const send = httpsCallable(functions, 'wcipSendSeasonalEmail', { timeout: 210000 })
 
 async function request(call, data) {
@@ -20,6 +21,7 @@ async function request(call, data) {
 }
 
 export const previewSeasonalEmail = () => request(preview, {})
+export const saveSeasonalEmailDraft = (data) => request(saveDraft, data)
 export const sendSeasonalEmail = (data) => request(send, data)
 
 export function downloadGuide(attachment) {

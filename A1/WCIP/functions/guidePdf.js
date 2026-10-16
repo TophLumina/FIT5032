@@ -1,11 +1,12 @@
 import PDFDocument from 'pdfkit'
+import { fileURLToPath } from 'node:url'
 
 // Runtime PDF generation stays inside the Node.js Cloud Function, with no remote assets.
 export function guidePdf(guide) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: 'A4',
-      margin: 48,
+      margins: { top: 48, left: 48, right: 48, bottom: 64 },
       bufferPages: true,
       info: {
         Title: guide.subject,
@@ -17,12 +18,19 @@ export function guidePdf(guide) {
     doc.on('data', (chunk) => chunks.push(chunk))
     doc.on('error', reject)
     doc.on('end', () => resolve(Buffer.concat(chunks)))
+    const editorialText = [guide.introduction, ...guide.tasks, guide.note].join('\n')
+    const extendedText = /[^\u0020-\u00ff\r\n\t]/u.test(editorialText)
+    if (extendedText)
+      doc.registerFont(
+        'Editorial',
+        fileURLToPath(new URL('./fonts/NotoSansSC-Regular.ttf', import.meta.url)),
+      )
     const title = (text) =>
       doc.fillColor('#24563f').font('Helvetica-Bold').fontSize(19).text(text).moveDown(0.6)
     const body = (text) =>
       doc
         .fillColor('#243b30')
-        .font('Helvetica')
+        .font(extendedText ? 'Editorial' : 'Helvetica')
         .fontSize(11)
         .text(text, { lineGap: 4 })
         .moveDown(0.7)
@@ -39,7 +47,7 @@ export function guidePdf(guide) {
     guide.tasks.forEach((task, index) => body(`${index + 1}. ${task}`))
     doc.moveDown(0.5)
     title('Plan for your own garden')
-    body(guide.note)
+    if (guide.note) body(guide.note)
     body(
       'Autumn and spring are generally useful planting windows for indigenous gardens in Melbourne. Winter growth is slower; summer heat makes establishment harder. The seasonal guidance is general, and the plant shortlist is curated by WCIP.',
     )

@@ -3,13 +3,20 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import InteractiveTable from '@/components/InteractiveTable.vue'
 import { isAdmin, user } from '@/services/auth'
-import { previewSeasonalEmail, sendSeasonalEmail, downloadGuide } from '@/services/seasonalEmail'
+import {
+  previewSeasonalEmail,
+  saveSeasonalEmailDraft,
+  sendSeasonalEmail,
+  downloadGuide,
+} from '@/services/seasonalEmail'
 
 const preview = ref(null)
 const selected = ref([])
 const reviewed = ref(false)
 const loading = ref(false)
 const sending = ref(false)
+const saving = ref(false)
+const draft = ref({ subject: '', introduction: '', checklist: '', note: '' })
 const error = ref('')
 const notice = ref('')
 const results = ref([])
@@ -44,11 +51,63 @@ const rows = computed(() =>
   })),
 )
 const selectedUsers = computed(() => rows.value.filter((row) => row.select))
+const content = computed(() => ({
+  subject: draft.value.subject,
+  introduction: draft.value.introduction,
+  tasks: draft.value.checklist
+    .split('\n')
+    .map((task) => task.trim())
+    .filter(Boolean),
+  note: draft.value.note,
+}))
+const dirty = computed(
+  () =>
+    preview.value &&
+    JSON.stringify(content.value) !==
+      JSON.stringify({
+        subject: preview.value.guide.subject,
+        introduction: preview.value.guide.introduction,
+        tasks: preview.value.guide.tasks,
+        note: preview.value.guide.note || '',
+      }),
+)
+const editorError = computed(() => {
+  if (!content.value.subject.trim() || content.value.subject.length > 200)
+    return 'Enter a subject of 1 to 200 characters.'
+  if (!content.value.introduction.trim() || content.value.introduction.length > 1200)
+    return 'Enter an introduction of 1 to 1,200 characters.'
+  if (
+    content.value.tasks.length < 1 ||
+    content.value.tasks.length > 6 ||
+    content.value.tasks.some((task) => task.length > 240)
+  )
+    return 'Enter 1 to 6 checklist items, with up to 240 characters per item.'
+  if (content.value.note.length > 1200) return 'Keep the additional note within 1,200 characters.'
+  return ''
+})
+function editContent(value) {
+  draft.value = {
+    subject: value.subject,
+    introduction: value.introduction,
+    checklist: value.tasks.join('\n'),
+    note: value.note || '',
+  }
+  reviewed.value = false
+}
+watch(
+  draft,
+  () => {
+    reviewed.value = false
+  },
+  { deep: true },
+)
 const canSend = computed(
   () =>
     isAdmin.value &&
     !loading.value &&
     !sending.value &&
+    !saving.value &&
+    !dirty.value &&
     !mustReload.value &&
     reviewed.value &&
     selected.value.length > 0 &&
@@ -76,11 +135,47 @@ async function load() {
     const response = await previewSeasonalEmail()
     if (token !== generation) return
     preview.value = response
+    editContent(response.guide)
     mustReload.value = false
   } catch (reason) {
     if (token === generation && reason.name !== 'AbortError') error.value = readableError(reason)
   } finally {
     if (token === generation) loading.value = false
+  }
+}
+async function save() {
+  if (
+    !isAdmin.value ||
+    !dirty.value ||
+    editorError.value ||
+    saving.value ||
+    sending.value ||
+    mustReload.value
+  )
+    return
+  const token = generation
+  saving.value = true
+  reviewed.value = false
+  error.value = ''
+  notice.value = ''
+  try {
+    const response = await saveSeasonalEmailDraft({
+      issueId: preview.value.guide.issueId,
+      draftVersion: preview.value.guide.draftVersion,
+      content: content.value,
+    })
+    if (token !== generation) return
+    preview.value = { ...preview.value, ...response }
+    editContent(response.guide)
+    notice.value =
+      'Draft saved for this month. Review the updated email and PDF before sending. No email was sent.'
+  } catch (reason) {
+    if (token === generation && reason.name !== 'AbortError') {
+      error.value = readableError(reason)
+      if (reason.code !== 'functions/invalid-argument') mustReload.value = true
+    }
+  } finally {
+    if (token === generation) saving.value = false
   }
 }
 function toggle(uid, checked) {
@@ -132,6 +227,8 @@ watch(
     notice.value = ''
     reviewed.value = false
     sending.value = false
+    saving.value = false
+    draft.value = { subject: '', introduction: '', checklist: '', note: '' }
     loading.value = false
     if (admin) load()
   },
@@ -154,10 +251,16 @@ onBeforeUnmount(() => generation++)
       <button
         type="button"
         class="btn btn-outline-primary"
-        :disabled="loading || sending"
+        :disabled="loading || sending || saving"
         @click="load"
       >
-        {{ loading ? 'Loading...' : 'Reload preview and subscribers' }}
+        {{
+          loading
+            ? 'Loading...'
+            : dirty
+              ? 'Discard edits and reload'
+              : 'Reload preview and subscribers'
+        }}
       </button>
     </header>
     <p v-if="loading" role="status">
@@ -178,7 +281,110 @@ onBeforeUnmount(() => generation++)
       <div class="row g-4 mb-4">
         <section class="col-lg-7" aria-labelledby="mail-preview-title">
           <div class="card card-body h-100">
-            <h2 id="mail-preview-title" class="h4">1. Review the email</h2>
+            <h2 id="mail-preview-title" class="h4">1. Edit and review the email</h2>
+            <p class="text-body-secondary">
+              Edit this month's message, then save to update the email and PDF together. Saved
+              drafts are shared with other administrators and remain available after reloading.
+            </p>
+            <fieldset
+              :disabled="saving || sending || mustReload"
+              aria-describedby="mail-editor-help"
+            >
+              <legend class="visually-hidden">Seasonal email content</legend>
+              <div class="mb-3">
+                <label for="mail-subject" class="form-label fw-semibold">Subject</label>
+                <input
+                  id="mail-subject"
+                  v-model="draft.subject"
+                  class="form-control"
+                  maxlength="200"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="mail-introduction" class="form-label fw-semibold">Introduction</label>
+                <textarea
+                  id="mail-introduction"
+                  v-model="draft.introduction"
+                  class="form-control"
+                  rows="4"
+                  maxlength="1200"
+                  required
+                  aria-describedby="mail-introduction-help"
+                ></textarea>
+                <p id="mail-introduction-help" class="form-text">
+                  {{ draft.introduction.length }} / 1,200 characters
+                </p>
+              </div>
+              <div class="mb-3">
+                <label for="mail-checklist" class="form-label fw-semibold"
+                  >Seasonal checklist</label
+                >
+                <textarea
+                  id="mail-checklist"
+                  v-model="draft.checklist"
+                  class="form-control"
+                  rows="5"
+                  maxlength="1500"
+                  required
+                  aria-describedby="mail-checklist-help"
+                ></textarea>
+                <p id="mail-checklist-help" class="form-text">
+                  One item per line; 1–6 items, up to 240 characters each.
+                </p>
+              </div>
+              <div class="mb-3">
+                <label for="mail-note" class="form-label fw-semibold"
+                  >Additional note (optional)</label
+                >
+                <textarea
+                  id="mail-note"
+                  v-model="draft.note"
+                  class="form-control"
+                  rows="4"
+                  maxlength="1200"
+                  aria-describedby="mail-note-help"
+                ></textarea>
+                <p id="mail-note-help" class="form-text">
+                  {{ draft.note.length }} / 1,200 characters
+                </p>
+              </div>
+              <p id="mail-editor-help" class="small text-body-secondary">
+                Plant facts and links come from the catalogue. Subscription instructions are
+                included automatically.
+              </p>
+              <p v-if="dirty && editorError" role="alert" class="text-danger">{{ editorError }}</p>
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  :disabled="!dirty || !!editorError"
+                  @click="save"
+                >
+                  {{ saving ? 'Saving and preparing PDF...' : 'Save draft and update preview' }}
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  :disabled="!dirty"
+                  @click="editContent(preview.guide)"
+                >
+                  Discard edits
+                </button>
+                <button
+                  v-if="preview.defaults"
+                  type="button"
+                  class="btn btn-link"
+                  @click="editContent(preview.defaults)"
+                >
+                  Restore seasonal defaults
+                </button>
+              </div>
+            </fieldset>
+            <p v-if="saving" role="status">Saving the draft and preparing the updated PDF...</p>
+            <p v-else-if="dirty" role="status" class="alert alert-warning">
+              Unsaved changes. Save the draft to refresh the preview and PDF before sending.
+            </p>
             <dl class="mb-3">
               <dt>From</dt>
               <dd class="text-break">
@@ -190,7 +396,7 @@ onBeforeUnmount(() => generation++)
               <dd>{{ preview.guide.subject }}</dd>
             </dl>
             <details open>
-              <summary class="fw-semibold mb-3">Email body</summary>
+              <summary class="fw-semibold mb-3">Saved email preview</summary>
               <div class="email-body border rounded p-3">{{ preview.text }}</div>
             </details>
           </div>
@@ -209,6 +415,7 @@ onBeforeUnmount(() => generation++)
             <button
               type="button"
               class="btn btn-outline-primary align-self-start"
+              :disabled="dirty || saving || sending || mustReload"
               @click="downloadGuide(preview.attachment)"
             >
               Download PDF to review
@@ -256,6 +463,7 @@ onBeforeUnmount(() => generation++)
               :checked="row.select"
               :disabled="
                 sending ||
+                saving ||
                 mustReload ||
                 !row.selectable ||
                 (!row.select && selected.length >= preview.maximumBatch)
@@ -284,7 +492,7 @@ onBeforeUnmount(() => generation++)
             v-model="reviewed"
             class="form-check-input"
             type="checkbox"
-            :disabled="sending || mustReload || !selected.length"
+            :disabled="sending || saving || dirty || mustReload || !selected.length"
           />
           <label for="mail-reviewed" class="form-check-label"
             >I have reviewed the email, PDF attachment and selected recipients.</label

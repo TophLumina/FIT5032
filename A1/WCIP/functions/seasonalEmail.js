@@ -2,7 +2,13 @@ import { HttpsError } from 'firebase-functions/v2/https'
 import { FieldValue, Timestamp } from 'firebase-admin/firestore'
 import { keyFor } from './reporting.js'
 import { siteDay } from './shared/siteDate.js'
-import { createSeasonalGuide, emailText, previewDigest } from './seasonalGuide.js'
+import {
+  createSeasonalGuide,
+  emailText,
+  previewDigest,
+  guideContent,
+  validateGuideContent,
+} from './seasonalGuide.js'
 import { guidePdf } from './guidePdf.js'
 import { mailPayload } from './emailMessage.js'
 import { signedIn } from './identity.js'
@@ -82,12 +88,73 @@ export function createSeasonalEmail({
   }
   const deliveryRef = (issueId, uid) =>
     db.doc(`seasonalMailIssues/${issueId}/recipients/${keyFor(uid)}`)
+  const draftRef = (issueId) => db.doc(`seasonalMailDrafts/${issueId}`)
+
+  async function currentGuide() {
+    const defaults = createSeasonalGuide(plants, now())
+    const draft = (await draftRef(defaults.issueId).get()).data()
+    return draft
+      ? { ...defaults, ...validateGuideContent(draft.content), draftVersion: draft.version }
+      : defaults
+  }
+
+  async function contentPreview(guide) {
+    const sender = getSender()
+    const pdf = await guidePdf(guide)
+    return {
+      guide,
+      defaults: guideContent(createSeasonalGuide(plants, now())),
+      sender,
+      text: emailText(guide),
+      digest: previewDigest(guide, sender),
+      attachment: {
+        filename: guide.filename,
+        base64: pdf.toString('base64'),
+        type: 'application/pdf',
+      },
+    }
+  }
+
+  async function saveDraft(request) {
+    const adminUid = await requireAdmin(request)
+    fields(request.data, ['issueId', 'draftVersion', 'content'])
+    const { issueId, draftVersion, content } = request.data
+    const defaults = createSeasonalGuide(plants, now())
+    if (issueId !== defaults.issueId)
+      throw new HttpsError(
+        'failed-precondition',
+        'The month has changed. Reload the current guide.',
+      )
+    if (!Number.isSafeInteger(draftVersion) || draftVersion < 0)
+      throw new HttpsError('invalid-argument', 'A valid draft version is required.')
+    const validated = validateGuideContent(content)
+    const guide = { ...defaults, ...validated, draftVersion: draftVersion + 1 }
+    // Generate the reviewable attachment before saving, so a rendering failure does not save a bad draft.
+    const response = await contentPreview(guide)
+    await requireAdmin(request)
+    await db.runTransaction(async (tx) => {
+      const [previous, role] = await tx.getAll(draftRef(issueId), db.doc(`admins/${adminUid}`))
+      if (role.data()?.role !== 'admin')
+        throw new HttpsError('permission-denied', 'Administrator access is required.')
+      if ((previous.data()?.version || 0) !== draftVersion)
+        throw new HttpsError(
+          'failed-precondition',
+          'Another administrator updated this draft. Reload before editing again.',
+        )
+      tx.set(draftRef(issueId), {
+        content: validated,
+        version: guide.draftVersion,
+        updatedBy: adminUid,
+        updatedAt: FieldValue.serverTimestamp(),
+      })
+    })
+    return response
+  }
 
   async function preview(request) {
     await requireAdmin(request)
     fields(request.data, [])
-    const guide = createSeasonalGuide(plants, now())
-    const sender = getSender()
+    const guide = await currentGuide()
     const snapshot = await db
       .collection('users')
       .where('seasonalEmailSubscribed', '==', true)
@@ -125,18 +192,10 @@ export function createSeasonalEmail({
         }
       })
       .sort((a, b) => a.email.localeCompare(b.email))
-    const pdf = await guidePdf(guide)
+    const response = await contentPreview(guide)
     await requireAdmin(request)
     return {
-      guide,
-      sender,
-      text: emailText(guide),
-      digest: previewDigest(guide, sender),
-      attachment: {
-        filename: guide.filename,
-        base64: pdf.toString('base64'),
-        type: 'application/pdf',
-      },
+      ...response,
       recipients,
       maximumBatch,
       dailyLimit,
@@ -160,7 +219,7 @@ export function createSeasonalEmail({
         'invalid-argument',
         'Choose 1 to 10 unique site users and a valid request ID.',
       )
-    const guide = createSeasonalGuide(plants, now())
+    const guide = await currentGuide()
     const sender = getSender()
     if (issueId !== guide.issueId || digest !== previewDigest(guide, sender))
       throw new HttpsError(
@@ -186,14 +245,20 @@ export function createSeasonalEmail({
       const ref = deliveryRef(issueId, uid)
       const quotaRef = db.doc(`seasonalMailDays/${siteDay(now())}`)
       const claim = await db.runTransaction(async (tx) => {
-        const [previous, quota, profile, role] = await tx.getAll(
+        const [previous, quota, profile, role, draft] = await tx.getAll(
           ref,
           quotaRef,
           db.doc(`users/${uid}`),
           db.doc(`admins/${adminUid}`),
+          draftRef(issueId),
         )
         if (role.data()?.role !== 'admin')
           throw new HttpsError('permission-denied', 'Administrator access is required.')
+        if ((draft.data()?.version || 0) !== guide.draftVersion)
+          throw new HttpsError(
+            'failed-precondition',
+            'The draft changed during sending. Reload to review the latest content and recorded results.',
+          )
         const record = previous.data()
         if (
           record &&
@@ -237,6 +302,8 @@ export function createSeasonalEmail({
           adminUid,
           requestId,
           digest,
+          subject: guide.subject,
+          draftVersion: guide.draftVersion,
           attempts,
           provider: 'gmail',
           history: history.slice(-2),
@@ -289,5 +356,5 @@ export function createSeasonalEmail({
     }
     return { issueId, results }
   }
-  return { preview, send }
+  return { preview, saveDraft, send }
 }

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { HttpsError } from 'firebase-functions/v2/https'
 import { siteDay } from './shared/siteDate.js'
 
 export const siteUrl = 'https://wcip-fit5032-e0aef.web.app'
@@ -86,6 +87,7 @@ export function createSeasonalGuide(plants, date = new Date()) {
   })
   return {
     revision: 1,
+    draftVersion: 0,
     issueId,
     edition,
     season,
@@ -97,6 +99,57 @@ export function createSeasonalGuide(plants, date = new Date()) {
     sources,
     accountUrl: `${siteUrl}/account`,
     filename: `WCIP-Melbourne-${issueId}-planting-guide.pdf`,
+  }
+}
+
+export function guideContent(guide) {
+  return {
+    subject: guide.subject,
+    introduction: guide.introduction,
+    tasks: [...guide.tasks],
+    note: guide.note,
+  }
+}
+
+// Only editorial text can change; plant facts, links, sender and subscription footer stay server-owned.
+export function validateGuideContent(content) {
+  const keys = ['subject', 'introduction', 'tasks', 'note']
+  if (
+    !content ||
+    typeof content !== 'object' ||
+    Array.isArray(content) ||
+    Object.keys(content).length !== keys.length ||
+    Object.keys(content).some((key) => !keys.includes(key))
+  )
+    throw new HttpsError(
+      'invalid-argument',
+      'Provide the subject, introduction, checklist and note.',
+    )
+  function text(value, label, maximum, multiline = true, required = true) {
+    if (
+      typeof value !== 'string' ||
+      value.length > maximum ||
+      (!multiline && /[\r\n]/.test(value)) ||
+      [...value].some((character) => {
+        const code = character.charCodeAt(0)
+        return (code < 32 && !['\r', '\n', '\t'].includes(character)) || code === 127
+      })
+    )
+      throw new HttpsError(
+        'invalid-argument',
+        `${label} must be valid text of at most ${maximum} characters.`,
+      )
+    const result = value.replaceAll('\r\n', '\n').replaceAll('\r', '\n').trim()
+    if (required && !result) throw new HttpsError('invalid-argument', `${label} cannot be empty.`)
+    return result
+  }
+  if (!Array.isArray(content.tasks) || content.tasks.length < 1 || content.tasks.length > 6)
+    throw new HttpsError('invalid-argument', 'Include between 1 and 6 checklist items.')
+  return {
+    subject: text(content.subject, 'Subject', 200, false),
+    introduction: text(content.introduction, 'Introduction', 1200),
+    tasks: content.tasks.map((task) => text(task, 'Each checklist item', 240, false)),
+    note: text(content.note, 'Additional note', 1200, true, false),
   }
 }
 

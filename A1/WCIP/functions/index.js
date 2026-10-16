@@ -61,6 +61,7 @@ export const wcipSyncUserActivity = onCall(callableOptions, backend.syncUserActi
 export const wcipDashboard = onCall(callableOptions, backend.getDashboard)
 export const wcipEmailPreferences = onCall(callableOptions, backend.emailPreferences)
 export const wcipSeasonalEmailPreview = onCall(callableOptions, seasonalEmail.preview)
+export const wcipSaveSeasonalEmailDraft = onCall(callableOptions, seasonalEmail.saveDraft)
 export const wcipSendSeasonalEmail = onCall(
   { ...callableOptions, timeoutSeconds: 180, secrets: [gmailCredentials] },
   seasonalEmail.send,
