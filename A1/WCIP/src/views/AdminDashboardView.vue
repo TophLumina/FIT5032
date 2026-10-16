@@ -6,7 +6,7 @@ import InteractiveTable from '@/components/InteractiveTable.vue'
 import { usePlants } from '@/composables/usePlants'
 import { isAdmin } from '@/services/auth'
 import { getDashboardData } from '@/services/dashboard'
-import { analyticsRange, buildAnalytics, shiftDay } from '@/utils/analytics'
+import { analyticsRange, shiftDay } from '@/utils/analytics'
 import { siteDay, siteTimezone } from '@/utils/siteDate'
 
 const { plants, loading: catalogLoading, error: catalogError, loadPlants } = usePlants()
@@ -19,6 +19,8 @@ const error = ref('')
 const updatedAt = ref(null)
 const showVisits = ref(true)
 const showComments = ref(true)
+const showLogins = ref(true)
+const showLoginUsers = ref(true)
 const metric = ref('comments')
 const role = ref('All')
 const selectedDay = ref('')
@@ -26,11 +28,7 @@ const selectedPlant = ref('')
 const detailPanel = ref(null)
 let requestId = 0,
   controller
-const dashboard = computed(() =>
-  data.value && appliedRange.value
-    ? buildAnalytics(data.value, plants.value, appliedRange.value)
-    : null,
-)
+const dashboard = computed(() => data.value)
 const users = computed(
   () =>
     dashboard.value?.users.filter((user) => role.value === 'All' || user.role === role.value) ?? [],
@@ -38,6 +36,10 @@ const users = computed(
 const series = computed(() => [
   ...(showVisits.value ? [{ key: 'visits', label: 'Recorded visits', color: '#24563f' }] : []),
   ...(showComments.value ? [{ key: 'comments', label: 'Current comments', color: '#244a96' }] : []),
+  ...(showLogins.value ? [{ key: 'logins', label: 'Recorded sign-ins', color: '#91421c' }] : []),
+  ...(showLoginUsers.value
+    ? [{ key: 'loginUsers', label: 'Daily signed-in users', color: '#703c86' }]
+    : []),
 ])
 const plantRows = computed(() =>
   [...(dashboard.value?.plantStats ?? [])].sort(
@@ -68,11 +70,18 @@ const userColumns = [
   { key: 'displayName', label: 'Display name' },
   { key: 'role', label: 'Role' },
   { key: 'commentCount', label: 'Current comments' },
+  {
+    key: 'lastLoginAt',
+    label: 'Last sign-in',
+    format: (value) => (value ? formatTime(value) : 'Not recorded'),
+  },
 ]
 const dailyColumns = [
   { key: 'day', label: 'Date' },
   { key: 'visits', label: 'Recorded visits' },
   { key: 'comments', label: 'Current comments' },
+  { key: 'logins', label: 'Recorded sign-ins' },
+  { key: 'loginUsers', label: 'Daily signed-in users' },
 ]
 const plantColumns = [
   { key: 'name', label: 'Plant' },
@@ -96,7 +105,7 @@ function formatTime(value) {
     timeZone: siteTimezone,
     dateStyle: 'medium',
     timeStyle: 'short',
-  }).format(value)
+  }).format(new Date(value))
 }
 
 async function refresh() {
@@ -263,7 +272,7 @@ onBeforeUnmount(() => {
             <div class="card-body p-4">
               <h2 class="h6">Comments in date range</h2>
               <p class="display-5 fw-bold mb-1" data-stat="period-comments">
-                {{ dashboard.comments.length.toLocaleString() }}
+                {{ dashboard.periodComments.toLocaleString() }}
               </p>
               <p class="small text-body-secondary mb-0">
                 {{ dashboard.currentComments }} current comments all time
@@ -286,13 +295,29 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
+      <div class="card card-body mb-4">
+        <h2 class="h6">Sign-ins in date range</h2>
+        <p class="h2 mb-2" data-stat="period-logins">
+          {{ dashboard.periodLogins.toLocaleString() }}
+        </p>
+        <p class="small text-body-secondary mb-0">
+          Each recorded authentication session counts once. Daily signed-in users count each account
+          once per Melbourne day; they are not the number of unique visitors.
+          <span v-if="dashboard.loginTrackingStartedAt"
+            >Recording started {{ formatTime(dashboard.loginTrackingStartedAt) }}.</span
+          >
+          Earlier sign-ins are not reconstructed. Restoring an existing session does not add a new
+          sign-in.
+        </p>
+      </div>
+
       <section class="card mb-4" aria-labelledby="activity-heading">
         <div class="card-body p-3 p-md-4">
           <div class="d-flex flex-wrap justify-content-between gap-3 mb-3">
             <div>
               <h2 id="activity-heading" class="h3">Activity over time</h2>
               <p class="text-body-secondary mb-0">
-                Recorded visits and current comments by creation date.
+                Visits, current comments and recorded sign-ins by Melbourne date.
               </p>
             </div>
             <fieldset class="d-flex flex-wrap gap-3">
@@ -301,7 +326,7 @@ onBeforeUnmount(() => {
                 ><input
                   v-model="showVisits"
                   type="checkbox"
-                  :disabled="showVisits && !showComments"
+                  :disabled="showVisits && series.length === 1"
                   class="form-check-input me-1"
                 />
                 <span class="series-dot visits" aria-hidden="true"></span> Recorded visits</label
@@ -310,10 +335,29 @@ onBeforeUnmount(() => {
                 ><input
                   v-model="showComments"
                   type="checkbox"
-                  :disabled="showComments && !showVisits"
+                  :disabled="showComments && series.length === 1"
                   class="form-check-input me-1"
                 />
                 <span class="series-dot comments" aria-hidden="true"></span> Current comments</label
+              >
+              <label
+                ><input
+                  v-model="showLogins"
+                  type="checkbox"
+                  :disabled="showLogins && series.length === 1"
+                  class="form-check-input me-1"
+                />
+                <span class="series-dot logins" aria-hidden="true"></span> Recorded sign-ins</label
+              >
+              <label
+                ><input
+                  v-model="showLoginUsers"
+                  type="checkbox"
+                  :disabled="showLoginUsers && series.length === 1"
+                  class="form-check-input me-1"
+                />
+                <span class="series-dot login-users" aria-hidden="true"></span> Daily signed-in
+                users</label
               >
             </fieldset>
           </div>
@@ -327,7 +371,7 @@ onBeforeUnmount(() => {
             <summary class="fw-semibold mb-3">Daily data table</summary>
             <InteractiveTable
               id="daily-activity"
-              caption="Daily recorded visits and current comments"
+              caption="Daily visits, comments and sign-in activity"
               :rows="dashboard.trend"
               :columns="dailyColumns"
               row-key="day"
@@ -342,7 +386,8 @@ onBeforeUnmount(() => {
           </details>
           <p class="small text-body-secondary mt-3 mb-0">
             A visit is an app open or reload, not a unique person. Navigation within the app adds no
-            visit. Blocked requests and offline visits are not counted.
+            visit. Blocked requests and offline visits are not counted. Recent activity may take a
+            few seconds to appear; use Refresh data to update the report.
             <span v-if="dashboard.trackingStartedAt">
               Recording started {{ formatTime(dashboard.trackingStartedAt) }}.</span
             >
@@ -486,8 +531,9 @@ onBeforeUnmount(() => {
         <div class="card-body p-3 p-md-4">
           <h2 id="users-heading" class="h3">Users and roles</h2>
           <p class="text-body-secondary">
-            Profiles created when people sign in to this site. This is not the full Firebase
-            Authentication account list. Role totals cover these profiles; guests have no profile.
+            Profiles synchronized by the server when people sign in to this site. This is not the
+            full Firebase Authentication account list. Role totals cover these profiles; guests have
+            no profile.
           </p>
           <div class="row g-3 mb-3" role="group" aria-label="Filter users by role">
             <div v-for="entry in dashboard.roleCounts" :key="entry.role" class="col-sm-6">
@@ -560,6 +606,13 @@ onBeforeUnmount(() => {
 }
 .comments {
   background: #244a96;
+}
+.logins {
+  background: #91421c;
+  border-radius: 50%;
+}
+.login-users {
+  background: #703c86;
 }
 .plant-bars {
   display: grid;

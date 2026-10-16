@@ -7,7 +7,8 @@
     "node": "22"
   },
   "scripts": {
-    "check": "node --check index.js"
+    "precheck": "node ../scripts/prepare-functions.mjs",
+    "check": "node --check index.js && node --check backend.js && node --check reporting.js"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",

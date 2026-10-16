@@ -6,6 +6,8 @@ import { clipBounds, densityCells, initialBounds, mapExtent } from '../../shared
 
 const props = defineProps({
   records: { type: Array, default: () => [] },
+  loading: { type: Boolean, default: false },
+  loadingLabel: { type: String, default: 'Loading plant observations…' },
   mode: { type: String, default: 'points' },
   targetBounds: { type: Array, default: () => initialBounds },
   selectedId: { type: String, default: '' },
@@ -143,14 +145,26 @@ onBeforeUnmount(() => {
 
 <template>
   <div>
-    <div
-      ref="element"
-      class="observation-map rounded border"
-      role="region"
-      aria-label="Melbourne plant observation map"
-      aria-describedby="map-keyboard-help"
-      tabindex="0"
-    ></div>
+    <div class="map-frame">
+      <div
+        ref="element"
+        class="observation-map rounded border"
+        role="region"
+        aria-label="Melbourne plant observation map"
+        aria-describedby="map-keyboard-help"
+        :aria-busy="loading"
+        tabindex="0"
+      ></div>
+      <div class="map-loading" role="status" aria-atomic="true">
+        <div v-if="loading" class="map-loading-card">
+          <span class="spinner-border map-loading-spinner" aria-hidden="true"></span>
+          <p class="fw-bold mb-1">{{ loadingLabel }}</p>
+          <p class="small mb-0">
+            Fetching records and preparing the map. This may take a few seconds.
+          </p>
+        </div>
+      </div>
+    </div>
     <p v-if="tileError" class="alert alert-warning mt-2" role="alert">
       Some background map tiles could not load. Observation records and the list below are still
       available.
@@ -164,6 +178,33 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.map-frame {
+  position: relative;
+  isolation: isolate;
+}
+.map-loading {
+  position: absolute;
+  inset: 3.5rem 1rem;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.map-loading-card {
+  width: min(100%, 22rem);
+  padding: 1.5rem;
+  border: 1px solid #a7b9ad;
+  border-radius: 0.75rem;
+  color: #234832;
+  background: #fff;
+  box-shadow: 0 0.5rem 1.5rem rgb(30 55 40 / 16%);
+  text-align: center;
+}
+.map-loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: 0.75rem;
+}
 .observation-map {
   height: clamp(22rem, 58vh, 38rem);
   width: 100%;
@@ -178,6 +219,9 @@ onBeforeUnmount(() => {
   color: #184d40;
 }
 @media (prefers-reduced-motion: reduce) {
+  .map-loading-spinner {
+    animation: none;
+  }
   .observation-map :deep(*) {
     transition: none !important;
   }

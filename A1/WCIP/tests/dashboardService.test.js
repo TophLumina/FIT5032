@@ -1,54 +1,51 @@
 import { beforeEach, expect, it, vi } from 'vitest'
 import { getDashboardData } from '../src/services/dashboard'
-import { getCountFromServer, getDocsFromServer, getDocFromServer } from 'firebase/firestore'
-
-vi.mock('../src/services/firebase', () => ({ db: {} }))
-vi.mock('../src/services/status', () => ({ recordVisit: vi.fn().mockResolvedValue() }))
-vi.mock('firebase/firestore', () => ({
-  collection: (_, path) => ({ path }),
-  collectionGroup: (_, path) => ({ path }),
-  doc: (_, ...parts) => ({ path: parts.join('/') }),
-  limit: (value) => ({ limit: value }),
-  where: (field, op, value) => ({ field, op, value }),
-  query: (ref, ...constraints) => ({ ...ref, constraints }),
-  getCountFromServer: vi.fn(),
-  getDocsFromServer: vi.fn(),
-  getDocFromServer: vi.fn(),
+import { syncUserProfile } from '../src/services/users'
+const mocks = vi.hoisted(() => ({ request: vi.fn() }))
+vi.mock('../src/services/firebase', () => ({
+  functions: {},
+  auth: { currentUser: { uid: 'admin' } },
 }))
+vi.mock('../src/services/status', () => ({ recordVisit: vi.fn().mockResolvedValue() }))
+vi.mock('../src/services/users', () => ({ syncUserProfile: vi.fn().mockResolvedValue() }))
+vi.mock('firebase/functions', () => ({ httpsCallable: () => mocks.request }))
 beforeEach(() => {
-  getCountFromServer.mockResolvedValue({ data: () => ({ count: 2 }) })
-  getDocsFromServer.mockResolvedValue({ size: 0, docs: [] })
-  getDocFromServer.mockResolvedValue({ data: () => undefined })
+  mocks.request.mockResolvedValue({ data: { periodVisits: 4, periodLogins: 2 } })
+  syncUserProfile.mockResolvedValue()
 })
-it('queries both Melbourne midnights and returns server aggregates for each day', async () => {
-  const data = await getDashboardData('2026-10-04', '2026-10-04')
-  expect(data.visits).toEqual([{ day: '2026-10-04', count: 2 }])
-  const constraints = getCountFromServer.mock.calls[1][0].constraints
-  expect(constraints[0].op).toBe('>=')
-  expect(constraints[1].op).toBe('<')
-  expect(constraints[0].value.toISOString()).toBe('2026-10-03T14:00:00.000Z')
-  expect(constraints[1].value.toISOString()).toBe('2026-10-04T13:00:00.000Z')
+it('uses the server report after synchronizing the current account', async () => {
+  expect(await getDashboardData('2026-10-04', '2026-10-04')).toEqual({
+    periodVisits: 4,
+    periodLogins: 2,
+  })
+  expect(mocks.request).toHaveBeenCalledWith({ from: '2026-10-04', to: '2026-10-04' })
+  expect(syncUserProfile).toHaveBeenCalledWith({ uid: 'admin' })
 })
-it('fails clearly instead of reporting a truncated profile directory', async () => {
-  getDocsFromServer.mockImplementation((ref) =>
-    Promise.resolve({ size: ref.path === 'users' ? 2001 : 0, docs: [] }),
-  )
+it('preserves explicit server failures instead of falling back to browser statistics', async () => {
+  mocks.request.mockRejectedValue(new Error('Report detail limit exceeded'))
   await expect(getDashboardData('2026-10-04', '2026-10-04')).rejects.toThrow(
-    'partial totals are not shown',
+    'Report detail limit exceeded',
   )
 })
 it('does not start work when revoked or superseded', async () => {
   const controller = new AbortController()
   controller.abort()
   await expect(getDashboardData('2026-10-04', '2026-10-04', controller.signal)).rejects.toThrow()
-  expect(getDocsFromServer).not.toHaveBeenCalled()
+  expect(mocks.request).not.toHaveBeenCalled()
 })
-it('stops scheduling daily reads after an in-flight request is aborted', async () => {
+it('does not fetch a report when the request becomes stale during profile sync', async () => {
   const controller = new AbortController()
-  getDocFromServer.mockImplementation(async () => {
+  syncUserProfile.mockImplementationOnce(async () => {
     controller.abort()
-    return { data: () => undefined }
   })
-  await expect(getDashboardData('2026-10-01', '2026-10-14', controller.signal)).rejects.toThrow()
-  expect(getCountFromServer).toHaveBeenCalledTimes(1)
+  await expect(getDashboardData('2026-10-04', '2026-10-04', controller.signal)).rejects.toThrow()
+  expect(mocks.request).not.toHaveBeenCalled()
+})
+it('discards a report completed after the request is aborted', async () => {
+  const controller = new AbortController()
+  mocks.request.mockImplementationOnce(async () => {
+    controller.abort()
+    return { data: {} }
+  })
+  await expect(getDashboardData('2026-10-04', '2026-10-04', controller.signal)).rejects.toThrow()
 })

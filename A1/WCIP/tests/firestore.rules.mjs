@@ -13,11 +13,9 @@ import {
   getDocs,
   getDoc,
   getCountFromServer,
-  query,
   setDoc,
   updateDoc,
   Timestamp,
-  where,
 } from 'firebase/firestore'
 
 let environment
@@ -55,25 +53,11 @@ after(async () => {
   await environment?.cleanup()
 })
 
-test('administrator can query roles, profiles, visits, configuration and comment group', async () => {
+test('administrator can read their own role but reports require a Cloud Function', async () => {
   const db = environment.authenticatedContext('admin', password).firestore()
-  await Promise.all([
-    assertSucceeds(getDocs(collection(db, 'admins'))),
-    assertSucceeds(getDocs(collection(db, 'users'))),
-    assertSucceeds(
-      getCountFromServer(
-        query(
-          collection(db, 'visits'),
-          where('visitedAt', '>=', new Date('2026-10-14T13:00:00Z')),
-          where('visitedAt', '<', new Date('2026-10-15T13:00:00Z')),
-        ),
-      ),
-    ),
-    assertSucceeds(getDoc(doc(db, 'status', 'config'))),
-    assertSucceeds(getDocs(collectionGroup(db, 'comments'))),
-  ])
+  await assertSucceeds(getDoc(doc(db, 'admins', 'admin')))
 })
-for (const identity of ['guest', 'member'])
+for (const identity of ['guest', 'member', 'admin'])
   test(`${identity} cannot read administrator reports`, async () => {
     const db =
       identity === 'guest'
@@ -123,3 +107,24 @@ test('revoking the administrator document denies subsequent report reads', async
   await assertFails(getDocs(collection(db, 'admins')))
   await assertFails(getDocs(collection(db, 'users')))
 })
+
+for (const identity of ['member', 'admin'])
+  test(
+    identity + ' cannot write profiles, login history or analytics from the client',
+    async () => {
+      const db = environment.authenticatedContext(identity, password).firestore()
+      for (const path of [
+        'users/' + identity,
+        'loginEvents/forged',
+        'loginDays/2026-10-16/users/forged',
+        'analyticsDays/2026-10-16',
+        'analyticsTotals/current',
+        'analyticsEntries/forged',
+        'analyticsComments/forged',
+        'analyticsUserStats/forged',
+      ]) {
+        await assertFails(setDoc(doc(db, path), { count: 999, lastLoginAt: Timestamp.now() }))
+        if (!path.startsWith('users/')) await assertFails(getDoc(doc(db, path)))
+      }
+    },
+  )

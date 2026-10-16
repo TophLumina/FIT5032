@@ -26,22 +26,45 @@ enableAutoUnmount(afterEach)
 const today = siteDay()
 const source = {
   totalVisits: 70,
-  visits: [{ day: today, count: 4 }],
+  periodVisits: 4,
+  periodComments: 1,
+  periodLogins: 3,
+  periodRatings: 1,
+  averageRating: 5,
+  currentComments: 1,
+  undatedComments: 0,
   trackingStartedAt: null,
-  roles: [{ uid: 'u0', role: 'admin' }],
-  profiles: Array.from({ length: 21 }, (_, i) => ({
-    uid: `u${i}`,
-    email: `user${i}@example.test`,
-    displayName: `Gardener ${i}`,
+  loginTrackingStartedAt: new Date().toISOString(),
+  trend: [{ day: today, visits: 4, comments: 1, logins: 3, loginUsers: 2 }],
+  roleCounts: [
+    { role: 'Administrator', count: 1 },
+    { role: 'Gardener', count: 20 },
+  ],
+  users: Array.from({ length: 21 }, (_, i) => ({
+    uid: 'u' + i,
+    email: 'user' + i + '@example.test',
+    displayName: 'Gardener ' + i,
+    role: i === 0 ? 'Administrator' : 'Gardener',
+    commentCount: i === 0 ? 1 : 0,
+    lastLoginAt: i === 0 ? new Date().toISOString() : null,
   })),
+  plantStats: [
+    { slug: 'violet', name: 'Violet', comments: 1, ratings: 1, average: 5 },
+    { slug: 'mint', name: 'Mint', comments: 0, ratings: 0, average: null },
+  ],
   comments: [
     {
-      path: 'discussions/plant:violet/comments/1',
-      authorUid: 'u0',
+      id: 'one',
+      path: 'discussions/plant:violet/comments/one',
+      type: 'plant',
+      slug: 'violet',
+      contentKey: 'plant:violet',
+      content: 'Violet',
+      url: '/plants/violet',
       author: 'Example',
       message: 'Great plant for this garden.',
       rating: 5,
-      createdAt: new Date(),
+      day: today,
     },
   ],
 }
@@ -60,6 +83,8 @@ describe('administrator dashboard', () => {
     await flushPromises()
     expect(wrapper.get('[data-stat="period-visits"]').text()).toBe('4')
     expect(wrapper.get('[data-stat="rating"]').text()).toBe('5.00 / 5')
+    expect(wrapper.get('[data-stat="period-logins"]').text()).toBe('3')
+    expect(wrapper.find('#admin-users-lastLoginAt').exists()).toBe(true)
     const table = wrapper.get('[aria-label="Registered users, roles and current comment counts"]')
     expect(table.findAll('tbody tr')).toHaveLength(10)
     await wrapper.get('#admin-users-displayName').setValue('Gardener 20')
@@ -74,9 +99,9 @@ describe('administrator dashboard', () => {
     const wrapper = render()
     await flushPromises()
     const chart = wrapper.getComponent(ActivityChart)
-    expect(chart.props('series')).toHaveLength(2)
+    expect(chart.props('series')).toHaveLength(4)
     await wrapper.findAll('input[type="checkbox"]')[0].setValue(false)
-    expect(chart.props('series')).toHaveLength(1)
+    expect(chart.props('series')).toHaveLength(3)
     await wrapper.get('#plant-metric').setValue('average')
     expect(wrapper.get('.plant-bars').attributes('aria-label')).toContain('average rating')
     await wrapper.findAll('.plant-bar')[0].trigger('click')

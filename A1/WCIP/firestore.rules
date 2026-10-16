@@ -52,8 +52,8 @@ service cloud.firestore {
     match /admins/{uid} {
       allow get: if signedIn() && request.auth.uid == uid;
       // Provision roles through Firebase Console / trusted server credentials only.
-      // The dashboard joins role membership to the restricted user directory.
-      allow list: if admin();
+      // Reports are served by an administrator-checked Cloud Function.
+      allow list: if false;
       allow write: if false;
     }
 
@@ -63,16 +63,8 @@ service cloud.firestore {
     }
 
     match /users/{uid} {
-      allow get: if signedIn() && (request.auth.uid == uid || admin());
-      allow list: if admin();
-      allow create, update: if signedIn() && request.auth.uid == uid
-        && request.resource.data.keys().hasAll(['email', 'displayName', 'updatedAt'])
-        && request.resource.data.keys().hasOnly(['email', 'displayName', 'updatedAt'])
-        && request.resource.data.email == request.auth.token.email
-        && request.resource.data.displayName is string
-        && request.resource.data.displayName.size() <= 30
-        && request.resource.data.updatedAt == request.time;
-      allow delete: if false;
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list, write: if false;
     }
 
     match /visits/{visitId} {
@@ -80,18 +72,13 @@ service cloud.firestore {
         && request.resource.data.keys().hasAll(['visitedAt'])
         && request.resource.data.keys().hasOnly(['visitedAt'])
         && request.resource.data.visitedAt == request.time;
-      allow read: if admin();
+      allow read: if false;
       allow update, delete: if false;
     }
 
     match /status/{document} {
-      allow read: if admin();
+      allow read: if false;
       allow write: if false;
-    }
-
-    // Status aggregates comments across plant and guide discussions.
-    match /{path=**}/comments/{commentId} {
-      allow read: if admin();
     }
 
     match /discussions/{contentKey}/comments/{commentId} {

@@ -92,7 +92,11 @@ async function loadRecords(bounds = viewportBounds.value) {
       { ...choices, plant: choices.plant.slug },
       AbortSignal.any([controller.signal, AbortSignal.timeout(30000)]),
     )
-    if (id === recordRequest) result.value = response
+    if (id === recordRequest) {
+      result.value = response
+      // Keep the loading state until the map has received and drawn the new records.
+      await nextTick()
+    }
   } catch (cause) {
     if (id === recordRequest && !controller.signal.aborted)
       error.value =
@@ -352,7 +356,6 @@ onBeforeUnmount(() => {
         <p v-if="selectedPlace" class="small" role="status">
           Area centred near {{ selectedPlace.name }}. The blue ring marks the searched place.
         </p>
-        <p v-if="loading" role="status">Loading GBIF observations. This can take a few seconds…</p>
         <div v-if="error" class="alert alert-warning" role="alert">
           {{ error }}
           <button type="button" class="btn btn-outline-primary ms-2" @click="loadRecords()">
@@ -374,6 +377,10 @@ onBeforeUnmount(() => {
         </p>
         <PlantObservationMap
           :records="records"
+          :loading="catalogLoading || loading"
+          :loading-label="
+            catalogLoading ? 'Preparing the plant map…' : 'Loading plant observations…'
+          "
           :mode="mode"
           :target-bounds="targetBounds"
           :selected-id="selectedId"

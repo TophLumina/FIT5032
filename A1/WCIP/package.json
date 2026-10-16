@@ -13,17 +13,18 @@
     "hosting:serve": "npm run build && firebase emulators:start --only hosting --project fit5032-e0aef",
     "deploy:hosting": "firebase deploy --only hosting:wcip --project fit5032-e0aef",
     "functions:check": "npm --prefix functions run check",
-    "functions:serve": "firebase emulators:start --only functions --project demo-wcip",
+    "functions:serve": "npm run functions:check && firebase emulators:start --config firebase.emulators.json --only auth,firestore,functions --project demo-wcip",
     "deploy:functions": "firebase deploy --only functions:wcip --project fit5032-e0aef",
     "lint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/",
     "test": "vitest run",
     "test:rules": "firebase emulators:exec --config firebase.emulators.json --only firestore --project demo-wcip \"node --test tests/firestore.rules.mjs\"",
-    "dev:emulators": "firebase emulators:start --config firebase.emulators.json --only auth,firestore --project demo-wcip",
-    "seed:emulators": "node scripts/seed-dashboard-emulator.mjs",
+    "dev:emulators": "npm run functions:check && firebase emulators:start --config firebase.emulators.json --only auth,firestore,functions --project demo-wcip",
+    "seed:emulators": "node scripts/seed-dashboard-emulator.mjs && node scripts/backfill-analytics.mjs --emulator",
     "api:dev": "wrangler dev --ip 127.0.0.1",
     "api:check": "wrangler deploy --dry-run",
-    "deploy:api": "wrangler deploy"
+    "deploy:api": "wrangler deploy",
+    "test:functions": "npm run functions:check && firebase emulators:exec --config firebase.emulators.json --only auth,firestore,functions --project demo-wcip \"node --test tests/functions.integration.mjs\""
   },
   "dependencies": {
     "bootstrap": "^5.3.8",
