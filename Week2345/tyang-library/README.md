@@ -54,8 +54,8 @@ Production site: <https://tyang-library-week2345.pages.dev>
 The first production deployment was published on 2026-10-23. HTTP checks of `/`,
 `/about`, and all referenced JavaScript, CSS, and favicon files returned 200 and
 matched the local build. Cloudflare's Git integration returned an installation
-error, so this project was created using Direct Upload. Git pushes alone do not
-currently deploy the site.
+error, so this project was created using Direct Upload. The GitHub Actions
+workflow below deploys changes to `main` once its Cloudflare credentials are set.
 
 ### Deploy from an IDE terminal
 
@@ -75,18 +75,42 @@ branch of `tyang-library-week2345`. Wrangler is pinned in `devDependencies`;
 The app uses Vue Router's history mode. Pages supplies SPA fallback for paths
 such as `/about` when the output has no top-level `404.html`.
 
-### Future GitHub Actions deployment
+### GitHub Actions deployment
 
-This Direct Upload project supports deployments from GitHub Actions. No workflow
-has been configured yet. A future workflow should:
+Workflow: [deploy-week2345.yml](../../.github/workflows/deploy-week2345.yml).
+GitHub requires this file in the repository root's `.github/workflows` directory;
+its shell commands run inside `Week2345/tyang-library`.
 
-- Live at the repository root, for example `.github/workflows/deploy-week2345.yml`.
-- Filter changes to this application and its workflow file.
-- Use `Week2345/tyang-library` as the working directory for shell commands.
-- Set up Node.js using this application's `.node-version` file and run `npm ci`.
-- Run any checks, then `npm run deploy` for production changes on `main`.
-- Supply `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` through GitHub Actions
-  secrets. The API token needs Cloudflare Pages Edit access to the target account.
+| Event | Behavior |
+| --- | --- |
+| Pull request targeting `main` | Install dependencies and build; no deployment credentials are used |
+| Push to `main` | Install dependencies, build, and deploy to the existing Pages project |
+| Manual run on `main` | Build and deploy |
+| Manual run on another branch | Build only |
+
+Push and pull request runs are filtered to changes in `Week2345/tyang-library/**`
+or the workflow itself. Unrelated coursework changes do not trigger this workflow.
+It reads `.node-version`, caches npm downloads using this application's lockfile,
+and deploys only after the build succeeds. Production runs are serialized.
+
+Configure the following in the repository's **Settings > Secrets and variables >
+Actions**:
+
+| Type | Name | Value |
+| --- | --- | --- |
+| Repository variable | `CLOUDFLARE_ACCOUNT_ID` | `669146a25a4a81b6fadf5df303c07e9e` (configured during setup) |
+| Repository secret | `CLOUDFLARE_API_TOKEN` | A Cloudflare API token with Account > Cloudflare Pages > Edit permission, limited to the target account |
+
+Create the token at <https://dash.cloudflare.com/profile/api-tokens> and save it
+directly in [GitHub Actions secrets](https://github.com/TophLumina/FIT5032/settings/secrets/actions).
+Do not commit the token or copy Wrangler's local OAuth credentials into GitHub.
+If credentials are missing, the deployment step fails with a setup message while
+the build result remains visible in the logs.
+
+After the workflow is pushed to GitHub and the credentials are configured, open
+**Actions > Week2345 build and deploy > Run workflow**, select `main`, and run it.
+Subsequent matching pushes to `main` deploy automatically. This uses Wrangler
+Direct Upload and does not depend on Cloudflare's GitHub App integration.
 
 If Cloudflare's built-in Git integration is preferred later, repair the GitHub
 installation and create a new Git-connected Pages project. Direct Upload
